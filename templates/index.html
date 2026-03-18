@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaMa 图像修复服务</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .upload-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-box {
+            border: 3px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .upload-box:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        .upload-box.has-image {
+            border-style: solid;
+            border-color: #667eea;
+            padding: 15px;
+        }
+
+        .upload-box input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            cursor: pointer;
+            display: block;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .preview-container {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .preview-container.show {
+            display: block;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .remove-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .remove-btn:hover {
+            background: #ee3344;
+        }
+
+        .mask-options {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .mask-options h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .option-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-label input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .process-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 2px solid #eee;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .result-image {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            display: none;
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .download-btn {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LaMa 图像修复服务</h1>
+            <p>基于 LaMa (Resolution-robust Large Mask Inpainting) 的智能图像修复</p>
+        </header>
+
+        <div class="main-content">
+            <div class="info-box">
+                <p><strong>使用说明：</strong>上传需要修复的图片，可选择上传掩码图片（白色区域为需要修复的部分）。如果不上传掩码，将使用默认的中心方块掩码进行演示。</p>
+            </div>
+
+            <div class="upload-section">
+                <div class="upload-box" id="imageBox">
+                    <input type="file" id="imageInput" accept="image/*">
+                    <label class="upload-label" for="imageInput">
+                        <div class="upload-icon">🖼️</div>
+                        <div class="upload-text">点击或拖拽上传图片</div>
+                    </label>
+                    <div class="preview-container" id="imagePreview">
+                        <img class="preview-image" id="imagePreviewImg">
+                        <button class="remove-btn" onclick="removeImage()">移除</button>
+                    </div>
+                </div>
+
+                <div class="upload-box" id="maskBox">
+                    <input type="file" id="maskInput" accept="image/*">
+                    <label class="upload-label" for="maskInput">
+                        <div class="upload-icon">🎭</div>
+                        <div class="upload-text">点击或拖拽上传掩码 (可选)</div>
+                    </label>
+                    <div class="preview-container" id="maskPreview">
+                        <img class="preview-image" id="maskPreviewImg">
+                        <button class="remove-btn" onclick="removeMask()">移除</button>
+                    </div>
+                </div>
+
+                <div class="mask-options">
+                    <h3>掩码选项</h3>
+                    <div class="option-group">
+                        <label class="radio-label">
+                            <input type="radio" name="maskOption" value="upload" checked>
+                            <span>使用上传的掩码</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="maskOption" value="center">
+                            <span>使用中心方块掩码</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="maskOption" value="random">
+                            <span>使用随机掩码</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="process-btn" id="processBtn" onclick="processImage()">
+                开始修复
+            </button>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>正在处理图片，请稍候...</p>
+            </div>
+
+            <div class="result-section" id="resultSection">
+                <h2>修复结果</h2>
+                <div class="result-container">
+                    <img class="result-image" id="resultImage">
+                    <button class="download-btn" onclick="downloadResult()">下载结果</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let imageFile = null;
+        let maskFile = null;
+        let resultBlob = null;
+
+        // Image upload handling
+        const imageBox = document.getElementById('imageBox');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewImg = document.getElementById('imagePreviewImg');
+
+        imageBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            imageBox.style.borderColor = '#667eea';
+        });
+
+        imageBox.addEventListener('dragleave', () => {
+            imageBox.style.borderColor = '#ddd';
+        });
+
+        imageBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            imageBox.style.borderColor = '#ddd';
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                handleImageFile(files[0]);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageFile(e.target.files[0]);
+            }
+        });
+
+        function handleImageFile(file) {
+            imageFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreviewImg.src = e.target.result;
+                imageBox.classList.add('has-image');
+                imagePreview.classList.add('show');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage() {
+            imageFile = null;
+            imageInput.value = '';
+            imageBox.classList.remove('has-image');
+            imagePreview.classList.remove('show');
+        }
+
+        // Mask upload handling
+        const maskBox = document.getElementById('maskBox');
+        const maskInput = document.getElementById('maskInput');
+        const maskPreview = document.getElementById('maskPreview');
+        const maskPreviewImg = document.getElementById('maskPreviewImg');
+
+        maskBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            maskBox.style.borderColor = '#667eea';
+        });
+
+        maskBox.addEventListener('dragleave', () => {
+            maskBox.style.borderColor = '#ddd';
+        });
+
+        maskBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            maskBox.style.borderColor = '#ddd';
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                handleMaskFile(files[0]);
+            }
+        });
+
+        maskInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleMaskFile(e.target.files[0]);
+            }
+        });
+
+        function handleMaskFile(file) {
+            maskFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                maskPreviewImg.src = e.target.result;
+                maskBox.classList.add('has-image');
+                maskPreview.classList.add('show');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeMask() {
+            maskFile = null;
+            maskInput.value = '';
+            maskBox.classList.remove('has-image');
+            maskPreview.classList.remove('show');
+        }
+
+        // Process image
+        async function processImage() {
+            const errorMessage = document.getElementById('errorMessage');
+            const loading = document.getElementById('loading');
+            const resultSection = document.getElementById('resultSection');
+            const processBtn = document.getElementById('processBtn');
+
+            errorMessage.classList.remove('show');
+            resultSection.classList.remove('show');
+
+            if (!imageFile) {
+                showError('请先上传图片');
+                return;
+            }
+
+            const maskOption = document.querySelector('input[name="maskOption"]:checked').value;
+
+            loading.classList.add('show');
+            processBtn.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('image', imageFile);
+
+                if (maskOption === 'upload' && maskFile) {
+                    formData.append('mask', maskFile);
+                }
+
+                const response = await fetch('/inpaint', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('处理失败，请稍后重试');
+                }
+
+                resultBlob = await response.blob();
+                const resultUrl = URL.createObjectURL(resultBlob);
+                document.getElementById('resultImage').src = resultUrl;
+                resultSection.classList.add('show');
+
+            } catch (error) {
+                showError('处理失败: ' + error.message);
+            } finally {
+                loading.classList.remove('show');
+                processBtn.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        function downloadResult() {
+            if (!resultBlob) return;
+            const url = URL.createObjectURL(resultBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'lama_result_' + Date.now() + '.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

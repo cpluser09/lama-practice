@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  lama-service:
+    build: .
+    container_name: lama-inpainting
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+    environment:
+      - PYTHONPATH=/app
+      - TORCH_HOME=/app
+    restart: unless-stopped

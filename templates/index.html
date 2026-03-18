@@ -523,6 +523,17 @@
 
                     <div class="drawing-controls" id="drawingControls">
                         <div class="control-row">
+                            <span class="control-label">掩码来源</span>
+                            <div class="mode-buttons">
+                                <button class="mode-btn active" data-source="preset" id="presetMaskBtn" onclick="setMaskSource('preset')">
+                                    📋 预设掩码
+                                </button>
+                                <button class="mode-btn" data-source="custom" id="customMaskBtn" onclick="setMaskSource('custom')">
+                                    ✏️ 自行绘制
+                                </button>
+                            </div>
+                        </div>
+                        <div class="control-row" id="drawModeRow" style="display: none;">
                             <span class="control-label">绘制模式</span>
                             <div class="mode-buttons">
                                 <button class="mode-btn active" data-mode="rectangle" onclick="setDrawMode('rectangle')">
@@ -540,11 +551,11 @@
                                 <span class="brush-size-value" id="brushSizeValue">20px</span>
                             </div>
                         </div>
-                        <div class="control-row">
+                        <div class="control-row" id="actionRow">
                             <span class="control-label">操作</span>
                             <div class="action-buttons">
-                                <button class="action-btn undo-btn" onclick="undoMask()">↶ 撤销</button>
-                                <button class="action-btn clear-btn" onclick="clearMask()">✕ 清除</button>
+                                <button class="action-btn undo-btn" id="undoBtn" onclick="undoMask()">↶ 撤销</button>
+                                <button class="action-btn clear-btn" id="clearBtn" onclick="clearMask()">✕ 清除</button>
                             </div>
                         </div>
                     </div>
@@ -591,6 +602,8 @@
         let loadedImage = null;
         let maskCanvas = null;
         let maskCtx = null;
+        let presetMaskCanvas = null;  // Store preset mask
+        let maskSource = 'preset';  // 'preset' or 'custom'
         let drawMode = 'rectangle';
         let isDrawing = false;
         let startX, startY;
@@ -732,7 +745,7 @@
                 canvas.style.width = width + 'px';
                 canvas.style.height = height + 'px';
 
-                // Create mask canvas
+                // Create mask canvas for custom drawing
                 maskCanvas = document.createElement('canvas');
                 maskCanvas.width = img.width;
                 maskCanvas.height = img.height;
@@ -740,12 +753,22 @@
                 maskCtx.fillStyle = 'black';
                 maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
 
-                // Load existing mask if provided
+                // Store preset mask if provided
                 if (maskImg) {
-                    maskCtx.drawImage(maskImg, 0, 0);
-                    saveMaskHistory();
+                    presetMaskCanvas = document.createElement('canvas');
+                    presetMaskCanvas.width = img.width;
+                    presetMaskCanvas.height = img.height;
+                    const presetCtx = presetMaskCanvas.getContext('2d');
+                    presetCtx.drawImage(maskImg, 0, 0);
+                    maskSource = 'preset';
+                    updateMaskSourceUI();
+                } else {
+                    presetMaskCanvas = null;
+                    maskSource = 'custom';
+                    updateMaskSourceUI();
                 }
 
+                maskHistory = [];
                 renderCanvas();
 
                 // Show editor
@@ -760,16 +783,59 @@
             img.src = URL.createObjectURL(imageBlob);
         }
 
+        function setMaskSource(source) {
+            maskSource = source;
+            updateMaskSourceUI();
+
+            if (source === 'custom') {
+                // Start with blank mask for custom drawing
+                maskHistory = [];
+                maskCtx.fillStyle = 'black';
+                maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+            }
+
+            renderCanvas();
+        }
+
+        function updateMaskSourceUI() {
+            const presetBtn = document.getElementById('presetMaskBtn');
+            const customBtn = document.getElementById('customMaskBtn');
+            const drawModeRow = document.getElementById('drawModeRow');
+            const brushSizeRow = document.getElementById('brushSizeRow');
+            const actionRow = document.getElementById('actionRow');
+            const hint = document.getElementById('canvasHint');
+
+            if (maskSource === 'preset' && presetMaskCanvas) {
+                presetBtn.classList.add('active');
+                customBtn.classList.remove('active');
+                drawModeRow.style.display = 'none';
+                brushSizeRow.style.display = 'none';
+                actionRow.style.display = 'none';
+                hint.textContent = '使用预设掩码';
+            } else {
+                presetBtn.classList.remove('active');
+                customBtn.classList.add('active');
+                drawModeRow.style.display = 'flex';
+                actionRow.style.display = 'flex';
+                hint.textContent = drawMode === 'rectangle' ? '拖拽鼠标绘制矩形' : '按住鼠标涂抹区域';
+            }
+        }
+
         function renderCanvas() {
             // Draw image
             ctx.drawImage(loadedImage, 0, 0);
 
-            // Draw mask overlay with transparency
-            ctx.drawImage(maskCanvas, 0, 0);
+            // Get the active mask
+            let activeMask;
+            if (maskSource === 'preset' && presetMaskCanvas) {
+                activeMask = presetMaskCanvas.getContext('2d');
+            } else {
+                activeMask = maskCtx;
+            }
 
             // Draw semi-transparent white overlay on masked areas
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+            const maskData = activeMask.getImageData(0, 0, canvas.width, canvas.height);
 
             for (let i = 0; i < imageData.data.length; i += 4) {
                 // Check if this pixel is masked (white in mask)
@@ -787,8 +853,8 @@
         function setDrawMode(mode) {
             drawMode = mode;
 
-            // Update button states
-            document.querySelectorAll('.mode-btn').forEach(btn => {
+            // Update button states (only for draw mode buttons)
+            document.querySelectorAll('[data-mode]').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.mode === mode);
             });
 
@@ -799,6 +865,23 @@
             // Update hint
             const hint = mode === 'rectangle' ? '拖拽鼠标绘制矩形' : '按住鼠标涂抹区域';
             document.getElementById('canvasHint').textContent = hint;
+        }
+
+        function undoMask() {
+            if (maskSource !== 'custom') return;
+            if (maskHistory.length > 0) {
+                const prevState = maskHistory.pop();
+                maskCtx.putImageData(prevState, 0, 0);
+                renderCanvas();
+            }
+        }
+
+        function clearMask() {
+            if (maskSource !== 'custom') return;
+            saveMaskHistory();
+            maskCtx.fillStyle = 'black';
+            maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+            renderCanvas();
         }
 
         function getCanvasCoords(e) {
@@ -812,7 +895,7 @@
         }
 
         function startDrawing(e) {
-            if (!loadedImage) return;
+            if (!loadedImage || maskSource !== 'custom') return;
             isDrawing = true;
             const coords = getCanvasCoords(e);
             startX = coords.x;
@@ -878,21 +961,6 @@
             maskHistory.push(maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height));
         }
 
-        function undoMask() {
-            if (maskHistory.length > 0) {
-                const prevState = maskHistory.pop();
-                maskCtx.putImageData(prevState, 0, 0);
-                renderCanvas();
-            }
-        }
-
-        function clearMask() {
-            saveMaskHistory();
-            maskCtx.fillStyle = 'black';
-            maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-            renderCanvas();
-        }
-
         // Process image
         async function processImage() {
             const errorMessage = document.getElementById('errorMessage');
@@ -907,8 +975,17 @@
                 return;
             }
 
+            // Get the active mask canvas
+            let activeMaskCanvas;
+            if (maskSource === 'preset' && presetMaskCanvas) {
+                activeMaskCanvas = presetMaskCanvas;
+            } else {
+                activeMaskCanvas = maskCanvas;
+            }
+
             // Check if mask has any white pixels
-            const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+            const activeMaskCtx = activeMaskCanvas.getContext('2d');
+            const maskData = activeMaskCtx.getImageData(0, 0, activeMaskCanvas.width, activeMaskCanvas.height);
             const hasMask = maskData.data.some((v, i) => i % 4 === 0 && v > 128);
 
             if (!hasMask) {
@@ -922,7 +999,7 @@
             try {
                 // Convert mask canvas to blob
                 const maskBlob = await new Promise(resolve => {
-                    maskCanvas.toBlob(resolve, 'image/png');
+                    activeMaskCanvas.toBlob(resolve, 'image/png');
                 });
 
                 const formData = new FormData();

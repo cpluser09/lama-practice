@@ -39,7 +39,7 @@ from saicinpainting.training.trainers import load_checkpoint
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=str(STATIC_FOLDER))
 CORS(app)
 
 # Configuration
@@ -48,9 +48,12 @@ OUTPUT_FOLDER = '/tmp/outputs'
 MODEL_PATH = '/app/big-lama'
 MAX_IMAGE_SIZE = 4096  # Limit image size for performance
 DEFAULT_IMAGE_SIZE = 1024  # Default size for large images
+STATIC_FOLDER = SYS_PATH / 'static'
+TEST_FOLDER = STATIC_FOLDER / 'test'
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+os.makedirs(TEST_FOLDER, exist_ok=True)
 
 # Increase max content length for large images
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB

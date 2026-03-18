@@ -31,9 +31,13 @@ ENV/
 # Temporary directories
 uploads/
 outputs/
+# Keep images for demo, but ignore temporary ones
 *.png
 *.jpg
 *.jpeg
+
+# Static test images (generated)
+static/
 
 # IDE
 .vscode/

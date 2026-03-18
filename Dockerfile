@@ -31,6 +31,10 @@ RUN pip install --no-cache-dir flask flask-cors pillow
 # Copy web service and templates
 COPY lama_service.py /app/
 COPY templates /app/templates
+COPY generate_test_images.py /app/
+
+# Generate test images
+RUN python generate_test_images.py
 
 # Create directories for uploads and outputs
 RUN mkdir -p /app/uploads /app/outputs

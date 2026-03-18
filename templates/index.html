@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 16px;
@@ -128,126 +128,215 @@
             border-bottom: 2px solid #667eea;
         }
 
-        /* Upload area */
-        .upload-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+        /* Upload section */
+        .upload-section {
+            margin-bottom: 20px;
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .upload-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .upload-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upload-btn input {
+            display: none;
+        }
+
+        /* Canvas editor */
+        .canvas-container {
+            position: relative;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .canvas-container.show {
+            display: block;
+        }
+
+        .canvas-container canvas {
+            display: block;
+            width: 100%;
+            cursor: crosshair;
+        }
+
+        .empty-state {
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            color: #999;
             margin-bottom: 15px;
         }
 
-        .upload-box {
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 20px 10px;
-            text-align: center;
-            transition: all 0.3s;
-            background: white;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            opacity: 0.5;
         }
 
-        .upload-box:hover {
+        /* Drawing controls */
+        .drawing-controls {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .drawing-controls.show {
+            display: block;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .control-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+            min-width: 60px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #555;
+        }
+
+        .mode-btn:hover {
             border-color: #667eea;
             background: #f0f2ff;
         }
 
-        .upload-box.has-image {
-            border-style: solid;
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border-color: #667eea;
-            padding: 10px;
         }
 
-        .upload-box input[type="file"] {
-            display: none;
-        }
-
-        .upload-label {
-            cursor: pointer;
-            width: 100%;
-        }
-
-        .upload-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-            opacity: 0.5;
-        }
-
-        .upload-text {
-            color: #666;
-            font-size: 12px;
-        }
-
-        .preview-container {
-            display: none;
-            width: 100%;
-        }
-
-        .preview-container.show {
-            display: block;
-        }
-
-        .preview-image {
-            width: 100%;
-            max-height: 100px;
-            object-fit: contain;
-            border-radius: 6px;
-        }
-
-        .remove-link {
-            color: #ff4757;
-            font-size: 11px;
-            cursor: pointer;
-            margin-top: 5px;
-            text-decoration: underline;
-        }
-
-        .remove-link:hover {
-            color: #ee3344;
-        }
-
-        /* Mask options */
-        .mask-options {
-            background: white;
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-
-        .mask-options h3 {
-            margin-bottom: 8px;
-            color: #333;
-            font-size: 13px;
-        }
-
-        .option-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .radio-label {
+        .brush-size-control {
             display: flex;
             align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            font-size: 13px;
+            gap: 10px;
+            flex: 1;
         }
 
-        .radio-label input[type="radio"] {
-            width: 16px;
-            height: 16px;
-            accent-color: #667eea;
+        .brush-size-control input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .brush-size-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .brush-size-control input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .brush-size-value {
+            font-size: 12px;
+            color: #666;
+            min-width: 35px;
+            text-align: center;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .undo-btn {
+            background: #6c757d;
+            color: white;
+        }
+
+        .undo-btn:hover {
+            background: #5a6268;
+        }
+
+        .clear-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .clear-btn:hover {
+            background: #c82333;
         }
 
         /* Process button */
         .process-btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            background: #4CAF50;
             color: white;
             border: none;
             border-radius: 10px;
@@ -259,6 +348,7 @@
 
         .process-btn:hover:not(:disabled) {
             transform: translateY(-2px);
+            background: #45a049;
         }
 
         .process-btn:disabled {
@@ -303,13 +393,14 @@
         .download-btn {
             margin-top: 15px;
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: #4CAF50;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 600;
         }
 
         .download-btn:hover {
@@ -371,6 +462,20 @@
             font-size: 13px;
             line-height: 1.5;
         }
+
+        /* Canvas overlay indicator */
+        .canvas-hint {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -382,7 +487,7 @@
 
         <div class="main-content">
             <div class="info-box">
-                <p><strong>使用说明：</strong>点击测试图片或上传需要修复的图片。掩码图片中白色区域表示需要修复的部分。点击测试图片会自动加载对应的掩码。</p>
+                <p><strong>使用说明：</strong>上传图片后，使用鼠标在图片上绘制需要修复的区域。支持矩形选择和自由涂抹两种模式。</p>
             </div>
 
             <div class="test-images">
@@ -397,53 +502,54 @@
             <div class="workspace">
                 <!-- Left: Input Panel -->
                 <div class="panel">
-                    <div class="panel-title">输入</div>
+                    <div class="panel-title">编辑</div>
 
-                    <div class="upload-grid">
-                        <div class="upload-box" id="imageBox">
+                    <div class="upload-section">
+                        <label class="upload-btn">
+                            <span>📁 上传图片</span>
                             <input type="file" id="imageInput" accept="image/*">
-                            <label class="upload-label" for="imageInput">
-                                <div class="upload-icon">🖼️</div>
-                                <div class="upload-text">点击上传图片</div>
-                            </label>
-                            <div class="preview-container" id="imagePreview">
-                                <img class="preview-image" id="imagePreviewImg">
-                                <span class="remove-link" onclick="removeImage()">清除</span>
+                        </label>
+                    </div>
+
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-state-icon">🖼️</div>
+                        <div>请上传图片开始编辑</div>
+                    </div>
+
+                    <div class="canvas-container" id="canvasContainer">
+                        <canvas id="editorCanvas"></canvas>
+                        <div class="canvas-hint" id="canvasHint">拖拽鼠标绘制矩形</div>
+                    </div>
+
+                    <div class="drawing-controls" id="drawingControls">
+                        <div class="control-row">
+                            <span class="control-label">绘制模式</span>
+                            <div class="mode-buttons">
+                                <button class="mode-btn active" data-mode="rectangle" onclick="setDrawMode('rectangle')">
+                                    ▢ 矩形
+                                </button>
+                                <button class="mode-btn" data-mode="brush" onclick="setDrawMode('brush')">
+                                    ✏️ 涂抹
+                                </button>
                             </div>
                         </div>
-
-                        <div class="upload-box" id="maskBox">
-                            <input type="file" id="maskInput" accept="image/*">
-                            <label class="upload-label" for="maskInput">
-                                <div class="upload-icon">🎭</div>
-                                <div class="upload-text">点击上传掩码</div>
-                            </label>
-                            <div class="preview-container" id="maskPreview">
-                                <img class="preview-image" id="maskPreviewImg">
-                                <span class="remove-link" onclick="removeMask()">清除</span>
+                        <div class="control-row" id="brushSizeRow" style="display: none;">
+                            <span class="control-label">笔刷大小</span>
+                            <div class="brush-size-control">
+                                <input type="range" id="brushSize" min="5" max="100" value="20">
+                                <span class="brush-size-value" id="brushSizeValue">20px</span>
+                            </div>
+                        </div>
+                        <div class="control-row">
+                            <span class="control-label">操作</span>
+                            <div class="action-buttons">
+                                <button class="action-btn undo-btn" onclick="undoMask()">↶ 撤销</button>
+                                <button class="action-btn clear-btn" onclick="clearMask()">✕ 清除</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="mask-options">
-                        <h3>掩码选项</h3>
-                        <div class="option-group">
-                            <label class="radio-label">
-                                <input type="radio" name="maskOption" value="upload" checked>
-                                <span>使用上传的掩码</span>
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="maskOption" value="center">
-                                <span>使用中心方块掩码</span>
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="maskOption" value="random">
-                                <span>使用随机掩码</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <button class="process-btn" id="processBtn" onclick="processImage()">
+                    <button class="process-btn" id="processBtn" onclick="processImage()" disabled>
                         开始修复
                     </button>
                 </div>
@@ -476,9 +582,20 @@
 
     <script>
         let imageFile = null;
-        let maskFile = null;
         let resultBlob = null;
         let originalImageDataUrl = null;
+
+        // Canvas and drawing state
+        const canvas = document.getElementById('editorCanvas');
+        const ctx = canvas.getContext('2d');
+        let loadedImage = null;
+        let maskCanvas = null;
+        let maskCtx = null;
+        let drawMode = 'rectangle';
+        let isDrawing = false;
+        let startX, startY;
+        let brushSize = 20;
+        let maskHistory = [];
 
         // Test images configuration
         const testImages = [
@@ -493,6 +610,7 @@
         // Load test images on page load
         document.addEventListener('DOMContentLoaded', () => {
             loadTestImages();
+            initCanvas();
         });
 
         function loadTestImages() {
@@ -511,123 +629,268 @@
 
         async function loadTestImage(test) {
             try {
-                // Load image
                 const imgResponse = await fetch(test.url);
                 if (!imgResponse.ok) return;
                 const imgBlob = await imgResponse.blob();
                 imageFile = new File([imgBlob], 'test_image.jpg', { type: 'image/jpeg' });
-                handleImageFile(imageFile);
 
-                // Load mask
+                // Load the mask to display on canvas
                 const maskResponse = await fetch(test.mask);
                 if (maskResponse.ok) {
                     const maskBlob = await maskResponse.blob();
-                    maskFile = new File([maskBlob], 'test_mask.png', { type: 'image/png' });
-                    handleMaskFile(maskFile);
+                    const maskImg = await createImageFromBlob(maskBlob);
+                    loadImageToCanvas(imgBlob, maskImg);
+                } else {
+                    loadImageToCanvas(imgBlob, null);
                 }
-
-                // Auto-select upload mask option
-                document.querySelector('input[name="maskOption"][value="upload"]').checked = true;
             } catch (e) {
                 console.log('Test image not available:', test.url);
             }
         }
 
+        function createImageFromBlob(blob) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = URL.createObjectURL(blob);
+            });
+        }
+
+        function initCanvas() {
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+
+            // Touch support
+            canvas.addEventListener('touchstart', handleTouchStart);
+            canvas.addEventListener('touchmove', handleTouchMove);
+            canvas.addEventListener('touchend', stopDrawing);
+
+            // Brush size slider
+            document.getElementById('brushSize').addEventListener('input', (e) => {
+                brushSize = parseInt(e.target.value);
+                document.getElementById('brushSizeValue').textContent = brushSize + 'px';
+            });
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            startDrawing({
+                offsetX: (touch.clientX - rect.left) * scaleX,
+                offsetY: (touch.clientY - rect.top) * scaleY
+            });
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            draw({
+                offsetX: (touch.clientX - rect.left) * scaleX,
+                offsetY: (touch.clientY - rect.top) * scaleY
+            });
+        }
+
         // Image upload handling
-        const imageBox = document.getElementById('imageBox');
-        const imageInput = document.getElementById('imageInput');
-
-        imageBox.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            imageBox.style.borderColor = '#667eea';
-        });
-
-        imageBox.addEventListener('dragleave', () => {
-            imageBox.style.borderColor = '#ddd';
-        });
-
-        imageBox.addEventListener('drop', (e) => {
-            e.preventDefault();
-            imageBox.style.borderColor = '#ddd';
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type.startsWith('image/')) {
-                handleImageFile(files[0]);
-            }
-        });
-
-        imageInput.addEventListener('change', (e) => {
+        document.getElementById('imageInput').addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                handleImageFile(e.target.files[0]);
+                imageFile = e.target.files[0];
+                loadImageToCanvas(imageFile, null);
             }
         });
 
-        function handleImageFile(file) {
-            imageFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('imagePreviewImg').src = e.target.result;
-                originalImageDataUrl = e.target.result;
-                imageBox.classList.add('has-image');
-                document.querySelector('.upload-label').style.display = 'none';
-                document.getElementById('imagePreview').classList.add('show');
+        function loadImageToCanvas(imageBlob, maskImg) {
+            const img = new Image();
+            img.onload = () => {
+                loadedImage = img;
+
+                // Set canvas size to match image
+                const maxWidth = 550;
+                const maxHeight = 450;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+                if (height > maxHeight) {
+                    width = (maxHeight / height) * width;
+                    height = maxHeight;
+                }
+
+                canvas.width = img.width;
+                canvas.height = img.height;
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+
+                // Create mask canvas
+                maskCanvas = document.createElement('canvas');
+                maskCanvas.width = img.width;
+                maskCanvas.height = img.height;
+                maskCtx = maskCanvas.getContext('2d');
+                maskCtx.fillStyle = 'black';
+                maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+                // Load existing mask if provided
+                if (maskImg) {
+                    maskCtx.drawImage(maskImg, 0, 0);
+                    saveMaskHistory();
+                }
+
+                renderCanvas();
+
+                // Show editor
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('canvasContainer').classList.add('show');
+                document.getElementById('drawingControls').classList.add('show');
+                document.getElementById('processBtn').disabled = false;
+
+                // Store original for display
+                originalImageDataUrl = URL.createObjectURL(imageBlob);
             };
-            reader.readAsDataURL(file);
+            img.src = URL.createObjectURL(imageBlob);
         }
 
-        function removeImage() {
-            imageFile = null;
-            imageInput.value = '';
-            imageBox.classList.remove('has-image');
-            document.querySelector('.upload-label').style.display = 'block';
-            document.getElementById('imagePreview').classList.remove('show');
+        function renderCanvas() {
+            // Draw image
+            ctx.drawImage(loadedImage, 0, 0);
+
+            // Draw mask overlay with transparency
+            ctx.drawImage(maskCanvas, 0, 0);
+
+            // Draw semi-transparent white overlay on masked areas
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                // Check if this pixel is masked (white in mask)
+                if (maskData.data[i] > 128) {
+                    // Apply semi-transparent white overlay
+                    imageData.data[i] = Math.min(255, imageData.data[i] + 100);     // R
+                    imageData.data[i + 1] = Math.min(255, imageData.data[i + 1] + 50); // G
+                    imageData.data[i + 2] = Math.min(255, imageData.data[i + 2] + 50); // B
+                }
+            }
+
+            ctx.putImageData(imageData, 0, 0);
         }
 
-        // Mask upload handling
-        const maskBox = document.getElementById('maskBox');
-        const maskInput = document.getElementById('maskInput');
+        function setDrawMode(mode) {
+            drawMode = mode;
 
-        maskBox.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            maskBox.style.borderColor = '#667eea';
-        });
+            // Update button states
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
 
-        maskBox.addEventListener('dragleave', () => {
-            maskBox.style.borderColor = '#ddd';
-        });
+            // Show/hide brush size control
+            document.getElementById('brushSizeRow').style.display =
+                mode === 'brush' ? 'flex' : 'none';
 
-        maskBox.addEventListener('drop', (e) => {
-            e.preventDefault();
-            maskBox.style.borderColor = '#ddd';
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].type.startsWith('image/')) {
-                handleMaskFile(files[0]);
-            }
-        });
+            // Update hint
+            const hint = mode === 'rectangle' ? '拖拽鼠标绘制矩形' : '按住鼠标涂抹区域';
+            document.getElementById('canvasHint').textContent = hint;
+        }
 
-        maskInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleMaskFile(e.target.files[0]);
-            }
-        });
-
-        function handleMaskFile(file) {
-            maskFile = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('maskPreviewImg').src = e.target.result;
-                maskBox.classList.add('has-image');
-                maskBox.querySelector('.upload-label').style.display = 'none';
-                document.getElementById('maskPreview').classList.add('show');
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (e.offsetX || 0) * scaleX,
+                y: (e.offsetY || 0) * scaleY
             };
-            reader.readAsDataURL(file);
         }
 
-        function removeMask() {
-            maskFile = null;
-            maskInput.value = '';
-            maskBox.classList.remove('has-image');
-            maskBox.querySelector('.upload-label').style.display = 'block';
-            document.getElementById('maskPreview').classList.remove('show');
+        function startDrawing(e) {
+            if (!loadedImage) return;
+            isDrawing = true;
+            const coords = getCanvasCoords(e);
+            startX = coords.x;
+            startY = coords.y;
+
+            if (drawMode === 'brush') {
+                saveMaskHistory();
+                maskCtx.fillStyle = 'white';
+                maskCtx.beginPath();
+                maskCtx.arc(startX, startY, brushSize / 2, 0, Math.PI * 2);
+                maskCtx.fill();
+                renderCanvas();
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+
+            const coords = getCanvasCoords(e);
+
+            if (drawMode === 'rectangle') {
+                renderCanvas();
+                // Preview rectangle
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.strokeRect(startX, startY, coords.x - startX, coords.y - startY);
+                ctx.setLineDash([]);
+            } else if (drawMode === 'brush') {
+                maskCtx.fillStyle = 'white';
+                maskCtx.beginPath();
+                maskCtx.arc(coords.x, coords.y, brushSize / 2, 0, Math.PI * 2);
+                maskCtx.fill();
+                renderCanvas();
+            }
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing) return;
+
+            if (drawMode === 'rectangle' && e.offsetX !== undefined) {
+                const coords = getCanvasCoords(e);
+                saveMaskHistory();
+
+                // Draw rectangle on mask
+                const x = Math.min(startX, coords.x);
+                const y = Math.min(startY, coords.y);
+                const w = Math.abs(coords.x - startX);
+                const h = Math.abs(coords.y - startY);
+
+                maskCtx.fillStyle = 'white';
+                maskCtx.fillRect(x, y, w, h);
+                renderCanvas();
+            }
+
+            isDrawing = false;
+        }
+
+        function saveMaskHistory() {
+            if (maskHistory.length > 10) {
+                maskHistory.shift();
+            }
+            maskHistory.push(maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height));
+        }
+
+        function undoMask() {
+            if (maskHistory.length > 0) {
+                const prevState = maskHistory.pop();
+                maskCtx.putImageData(prevState, 0, 0);
+                renderCanvas();
+            }
+        }
+
+        function clearMask() {
+            saveMaskHistory();
+            maskCtx.fillStyle = 'black';
+            maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+            renderCanvas();
         }
 
         // Process image
@@ -639,16 +902,17 @@
 
             errorMessage.classList.remove('show');
 
-            if (!imageFile) {
-                showError('请先上传图片');
+            if (!imageFile || !maskCanvas) {
+                showError('请先上传图片并绘制掩码区域');
                 return;
             }
 
-            const maskOption = document.querySelector('input[name="maskOption"]:checked').value;
+            // Check if mask has any white pixels
+            const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+            const hasMask = maskData.data.some((v, i) => i % 4 === 0 && v > 128);
 
-            // Validate mask option
-            if (maskOption === 'upload' && !maskFile) {
-                showError('选择了"使用上传的掩码"但没有上传掩码图片，请上传掩码或选择其他掩码选项');
+            if (!hasMask) {
+                showError('请先在图片上绘制需要修复的区域');
                 return;
             }
 
@@ -656,12 +920,14 @@
             processBtn.disabled = true;
 
             try {
+                // Convert mask canvas to blob
+                const maskBlob = await new Promise(resolve => {
+                    maskCanvas.toBlob(resolve, 'image/png');
+                });
+
                 const formData = new FormData();
                 formData.append('image', imageFile);
-
-                if (maskOption === 'upload' && maskFile) {
-                    formData.append('mask', maskFile);
-                }
+                formData.append('mask', new File([maskBlob], 'mask.png', { type: 'image/png' }));
 
                 const response = await fetch('/inpaint', {
                     method: 'POST',

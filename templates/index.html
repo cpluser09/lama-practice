@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 16px;
@@ -30,311 +30,42 @@
         header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 25px;
             text-align: center;
         }
 
         header h1 {
-            font-size: 2em;
-            margin-bottom: 10px;
+            font-size: 1.8em;
+            margin-bottom: 8px;
         }
 
         header p {
             opacity: 0.9;
+            font-size: 0.95em;
         }
 
         .main-content {
-            padding: 40px;
+            padding: 30px;
         }
 
-        .upload-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .upload-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .upload-box {
-            border: 3px dashed #ddd;
-            border-radius: 12px;
-            padding: 40px 20px;
-            text-align: center;
-            transition: all 0.3s;
-            background: #f8f9fa;
-        }
-
-        .upload-box:hover {
-            border-color: #667eea;
-            background: #f0f2ff;
-        }
-
-        .upload-box.has-image {
-            border-style: solid;
-            border-color: #667eea;
-            padding: 15px;
-        }
-
-        .upload-box input[type="file"] {
-            display: none;
-        }
-
-        .upload-label {
-            cursor: pointer;
-            display: block;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        .upload-text {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .preview-container {
-            display: none;
-            margin-top: 15px;
-        }
-
-        .preview-container.show {
-            display: block;
-        }
-
-        .preview-image {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .remove-btn {
-            margin-top: 10px;
-            padding: 8px 16px;
-            background: #ff4757;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .remove-btn:hover {
-            background: #ee3344;
-        }
-
-        .mask-options {
-            grid-column: 1 / -1;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .mask-options h3 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .option-group {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .radio-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
-
-        .radio-label input[type="radio"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #667eea;
-        }
-
-        .process-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .process-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-        }
-
-        .process-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .result-section {
-            display: none;
-            margin-top: 40px;
-            padding-top: 40px;
-            border-top: 2px solid #eee;
-        }
-
-        .result-section.show {
-            display: block;
-        }
-
-        .result-section h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
-        }
-
-        .result-container {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            gap: 30px;
-            align-items: flex-start;
-        }
-
-        .result-item {
-            flex: 1;
-            max-width: 500px;
-            text-align: center;
-        }
-
-        .result-item h3 {
-            margin-bottom: 15px;
-            color: #555;
-            font-size: 16px;
-        }
-
-        .result-image {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
-
-        .download-btn {
-            padding: 12px 24px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 15px;
-        }
-
-        @media (max-width: 1024px) {
-            .result-container {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .result-item {
-                max-width: 100%;
-            }
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .loading.show {
-            display: block;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            display: none;
-            background: #fee;
-            color: #c33;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .info-box {
-            background: #e8f4fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .info-box p {
-            color: #555;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .download-btn {
-            padding: 12px 24px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-
-        .download-btn:hover {
-            background: #45a049;
-        }
-
+        /* Test images section */
         .test-images {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 15px 20px;
             border-radius: 12px;
             margin-bottom: 20px;
         }
 
         .test-images h3 {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             color: #333;
-            font-size: 16px;
+            font-size: 15px;
         }
 
         .test-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
         }
 
         .test-item {
@@ -354,17 +85,291 @@
 
         .test-item img {
             width: 100%;
-            height: 80px;
+            height: 70px;
             object-fit: cover;
             display: block;
         }
 
         .test-item-label {
-            padding: 8px;
+            padding: 6px;
             font-size: 11px;
             color: #666;
             text-align: center;
             background: white;
+        }
+
+        /* Two column workspace */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        /* Upload area */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .upload-box {
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 20px 10px;
+            text-align: center;
+            transition: all 0.3s;
+            background: white;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-box:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+
+        .upload-box.has-image {
+            border-style: solid;
+            border-color: #667eea;
+            padding: 10px;
+        }
+
+        .upload-box input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .preview-container {
+            display: none;
+            width: 100%;
+        }
+
+        .preview-container.show {
+            display: block;
+        }
+
+        .preview-image {
+            width: 100%;
+            max-height: 100px;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+
+        .remove-link {
+            color: #ff4757;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 5px;
+            text-decoration: underline;
+        }
+
+        .remove-link:hover {
+            color: #ee3344;
+        }
+
+        /* Mask options */
+        .mask-options {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mask-options h3 {
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 13px;
+        }
+
+        .option-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .radio-label input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #667eea;
+        }
+
+        /* Process button */
+        .process-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .process-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Result section */
+        .result-panel {
+            display: none;
+        }
+
+        .result-panel.show {
+            display: block;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .result-item {
+            text-align: center;
+        }
+
+        .result-item h4 {
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        .result-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #f0f0f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .download-btn {
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error message */
+        .error-message {
+            display: none;
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        /* Info box */
+        .info-box {
+            background: #e8f4fd;
+            border-left: 4px solid #2196f3;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #555;
+            font-size: 13px;
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -376,6 +381,10 @@
         </header>
 
         <div class="main-content">
+            <div class="info-box">
+                <p><strong>使用说明：</strong>点击测试图片或上传需要修复的图片。掩码图片中白色区域表示需要修复的部分。点击测试图片会自动加载对应的掩码。</p>
+            </div>
+
             <div class="test-images">
                 <h3>测试图片</h3>
                 <div class="test-grid" id="testGrid">
@@ -383,77 +392,83 @@
                 </div>
             </div>
 
-            <div class="info-box">
-                <p><strong>使用说明：</strong>上传需要修复的图片，可选择上传掩码图片（白色区域为需要修复的部分）。如果不上传掩码，将使用默认的中心方块掩码进行演示。</p>
-            </div>
-
-            <div class="upload-section">
-                <div class="upload-box" id="imageBox">
-                    <input type="file" id="imageInput" accept="image/*">
-                    <label class="upload-label" for="imageInput">
-                        <div class="upload-icon">🖼️</div>
-                        <div class="upload-text">点击或拖拽上传图片</div>
-                    </label>
-                    <div class="preview-container" id="imagePreview">
-                        <img class="preview-image" id="imagePreviewImg">
-                        <button class="remove-btn" onclick="removeImage()">移除</button>
-                    </div>
-                </div>
-
-                <div class="upload-box" id="maskBox">
-                    <input type="file" id="maskInput" accept="image/*">
-                    <label class="upload-label" for="maskInput">
-                        <div class="upload-icon">🎭</div>
-                        <div class="upload-text">点击或拖拽上传掩码 (可选)</div>
-                    </label>
-                    <div class="preview-container" id="maskPreview">
-                        <img class="preview-image" id="maskPreviewImg">
-                        <button class="remove-btn" onclick="removeMask()">移除</button>
-                    </div>
-                </div>
-
-                <div class="mask-options">
-                    <h3>掩码选项</h3>
-                    <div class="option-group">
-                        <label class="radio-label">
-                            <input type="radio" name="maskOption" value="upload" checked>
-                            <span>使用上传的掩码</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="maskOption" value="center">
-                            <span>使用中心方块掩码</span>
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="maskOption" value="random">
-                            <span>使用随机掩码</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <button class="process-btn" id="processBtn" onclick="processImage()">
-                开始修复
-            </button>
-
             <div class="error-message" id="errorMessage"></div>
 
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>正在处理图片，请稍候...</p>
-            </div>
+            <div class="workspace">
+                <!-- Left: Input Panel -->
+                <div class="panel">
+                    <div class="panel-title">输入</div>
 
-            <div class="result-section" id="resultSection">
-                <h2>修复结果</h2>
-                <div class="result-container">
-                    <div class="result-item">
-                        <h3>原图</h3>
-                        <img class="result-image" id="originalImage" alt="Original">
+                    <div class="upload-grid">
+                        <div class="upload-box" id="imageBox">
+                            <input type="file" id="imageInput" accept="image/*">
+                            <label class="upload-label" for="imageInput">
+                                <div class="upload-icon">🖼️</div>
+                                <div class="upload-text">点击上传图片</div>
+                            </label>
+                            <div class="preview-container" id="imagePreview">
+                                <img class="preview-image" id="imagePreviewImg">
+                                <span class="remove-link" onclick="removeImage()">清除</span>
+                            </div>
+                        </div>
+
+                        <div class="upload-box" id="maskBox">
+                            <input type="file" id="maskInput" accept="image/*">
+                            <label class="upload-label" for="maskInput">
+                                <div class="upload-icon">🎭</div>
+                                <div class="upload-text">点击上传掩码</div>
+                            </label>
+                            <div class="preview-container" id="maskPreview">
+                                <img class="preview-image" id="maskPreviewImg">
+                                <span class="remove-link" onclick="removeMask()">清除</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="result-item">
-                        <h3>修复后</h3>
-                        <img class="result-image" id="resultImage" alt="Result">
-                        <button class="download-btn" onclick="downloadResult()">下载结果</button>
+
+                    <div class="mask-options">
+                        <h3>掩码选项</h3>
+                        <div class="option-group">
+                            <label class="radio-label">
+                                <input type="radio" name="maskOption" value="upload" checked>
+                                <span>使用上传的掩码</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="maskOption" value="center">
+                                <span>使用中心方块掩码</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="maskOption" value="random">
+                                <span>使用随机掩码</span>
+                            </label>
+                        </div>
                     </div>
+
+                    <button class="process-btn" id="processBtn" onclick="processImage()">
+                        开始修复
+                    </button>
+                </div>
+
+                <!-- Right: Result Panel -->
+                <div class="panel result-panel" id="resultPanel">
+                    <div class="panel-title">结果</div>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>正在处理图片，请稍候...</p>
+                    </div>
+
+                    <div class="result-grid">
+                        <div class="result-item">
+                            <h4>原图</h4>
+                            <img class="result-image" id="originalImage" alt="Original">
+                        </div>
+                        <div class="result-item">
+                            <h4>修复后</h4>
+                            <img class="result-image" id="resultImage" alt="Result">
+                        </div>
+                    </div>
+
+                    <button class="download-btn" onclick="downloadResult()">下载结果</button>
                 </div>
             </div>
         </div>
@@ -464,16 +479,15 @@
         let maskFile = null;
         let resultBlob = null;
         let originalImageDataUrl = null;
-        let currentMode = 'slider';
 
         // Test images configuration
         const testImages = [
-            { name: '文字去除', url: '/static/test/text_removal.jpg', desc: '去除图片中的文字' },
-            { name: '物体移除', url: '/static/test/object_removal.jpg', desc: '移除多余物体' },
-            { name: '划痕修复', url: '/static/test/scratch_repair.jpg', desc: '修复照片划痕' },
-            { name: '人脸修复', url: '/static/test/face_restoration.jpg', desc: '修复人脸部分' },
-            { name: '水印移除', url: '/static/test/watermark.jpg', desc: '去除水印标记' },
-            { name: '旧照片', url: '/static/test/old_photo.jpg', desc: '修复老旧照片' }
+            { name: '文字去除', url: '/static/test/text_removal.jpg', mask: '/static/test/text_removal_mask.png' },
+            { name: '物体移除', url: '/static/test/object_removal.jpg', mask: '/static/test/object_removal_mask.png' },
+            { name: '划痕修复', url: '/static/test/scratch_repair.jpg', mask: '/static/test/scratch_repair_mask.png' },
+            { name: '人脸修复', url: '/static/test/face_restoration.jpg', mask: '/static/test/face_restoration_mask.png' },
+            { name: '水印移除', url: '/static/test/watermark.jpg', mask: '/static/test/watermark_mask.png' },
+            { name: '旧照片', url: '/static/test/old_photo.jpg', mask: '/static/test/old_photo_mask.png' }
         ];
 
         // Load test images on page load
@@ -490,28 +504,38 @@
                     <img src="${test.url}" alt="${test.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2280%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%2280%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EN/A%3C/text%3E%3C/svg%3E'">
                     <div class="test-item-label">${test.name}</div>
                 `;
-                item.onclick = () => loadTestImage(test.url);
+                item.onclick = () => loadTestImage(test);
                 grid.appendChild(item);
             });
         }
 
-        async function loadTestImage(url) {
+        async function loadTestImage(test) {
             try {
-                const response = await fetch(url);
-                if (!response.ok) return;
-                const blob = await response.blob();
-                imageFile = new File([blob], 'test_image.jpg', { type: 'image/jpeg' });
+                // Load image
+                const imgResponse = await fetch(test.url);
+                if (!imgResponse.ok) return;
+                const imgBlob = await imgResponse.blob();
+                imageFile = new File([imgBlob], 'test_image.jpg', { type: 'image/jpeg' });
                 handleImageFile(imageFile);
+
+                // Load mask
+                const maskResponse = await fetch(test.mask);
+                if (maskResponse.ok) {
+                    const maskBlob = await maskResponse.blob();
+                    maskFile = new File([maskBlob], 'test_mask.png', { type: 'image/png' });
+                    handleMaskFile(maskFile);
+                }
+
+                // Auto-select upload mask option
+                document.querySelector('input[name="maskOption"][value="upload"]').checked = true;
             } catch (e) {
-                console.log('Test image not available:', url);
+                console.log('Test image not available:', test.url);
             }
         }
 
         // Image upload handling
         const imageBox = document.getElementById('imageBox');
         const imageInput = document.getElementById('imageInput');
-        const imagePreview = document.getElementById('imagePreview');
-        const imagePreviewImg = document.getElementById('imagePreviewImg');
 
         imageBox.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -541,10 +565,11 @@
             imageFile = file;
             const reader = new FileReader();
             reader.onload = (e) => {
-                imagePreviewImg.src = e.target.result;
+                document.getElementById('imagePreviewImg').src = e.target.result;
                 originalImageDataUrl = e.target.result;
                 imageBox.classList.add('has-image');
-                imagePreview.classList.add('show');
+                document.querySelector('.upload-label').style.display = 'none';
+                document.getElementById('imagePreview').classList.add('show');
             };
             reader.readAsDataURL(file);
         }
@@ -553,14 +578,13 @@
             imageFile = null;
             imageInput.value = '';
             imageBox.classList.remove('has-image');
-            imagePreview.classList.remove('show');
+            document.querySelector('.upload-label').style.display = 'block';
+            document.getElementById('imagePreview').classList.remove('show');
         }
 
         // Mask upload handling
         const maskBox = document.getElementById('maskBox');
         const maskInput = document.getElementById('maskInput');
-        const maskPreview = document.getElementById('maskPreview');
-        const maskPreviewImg = document.getElementById('maskPreviewImg');
 
         maskBox.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -590,9 +614,10 @@
             maskFile = file;
             const reader = new FileReader();
             reader.onload = (e) => {
-                maskPreviewImg.src = e.target.result;
+                document.getElementById('maskPreviewImg').src = e.target.result;
                 maskBox.classList.add('has-image');
-                maskPreview.classList.add('show');
+                maskBox.querySelector('.upload-label').style.display = 'none';
+                document.getElementById('maskPreview').classList.add('show');
             };
             reader.readAsDataURL(file);
         }
@@ -601,18 +626,18 @@
             maskFile = null;
             maskInput.value = '';
             maskBox.classList.remove('has-image');
-            maskPreview.classList.remove('show');
+            maskBox.querySelector('.upload-label').style.display = 'block';
+            document.getElementById('maskPreview').classList.remove('show');
         }
 
         // Process image
         async function processImage() {
             const errorMessage = document.getElementById('errorMessage');
             const loading = document.getElementById('loading');
-            const resultSection = document.getElementById('resultSection');
+            const resultPanel = document.getElementById('resultPanel');
             const processBtn = document.getElementById('processBtn');
 
             errorMessage.classList.remove('show');
-            resultSection.classList.remove('show');
 
             if (!imageFile) {
                 showError('请先上传图片');
@@ -620,6 +645,12 @@
             }
 
             const maskOption = document.querySelector('input[name="maskOption"]:checked').value;
+
+            // Validate mask option
+            if (maskOption === 'upload' && !maskFile) {
+                showError('选择了"使用上传的掩码"但没有上传掩码图片，请上传掩码或选择其他掩码选项');
+                return;
+            }
 
             loading.classList.add('show');
             processBtn.disabled = true;
@@ -648,7 +679,7 @@
                 document.getElementById('originalImage').src = originalImageDataUrl;
                 document.getElementById('resultImage').src = resultUrl;
 
-                resultSection.classList.add('show');
+                resultPanel.classList.add('show');
 
             } catch (error) {
                 showError('处理失败: ' + error.message);

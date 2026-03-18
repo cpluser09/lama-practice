@@ -2,6 +2,84 @@
 
 基于 LaMa (Resolution-robust Large Mask Inpainting with Fourier Convolutions) 的图像修复 Web 服务。
 
+## Quick Start
+
+### 本地快速启动
+
+```bash
+# 克隆项目
+git clone --recurse-submodules https://github.com/cpluser09/lama-practice.git
+cd lama-practice
+
+# 使用 Docker Compose 启动
+docker-compose up --build
+
+# 服务将在 http://localhost:5000 启动
+```
+
+### 服务器部署
+
+#### 1. 首次部署到服务器
+
+```bash
+# SSH 连接到服务器
+ssh user@your-server.com
+
+# 克隆项目（包含子模块）
+git clone --recurse-submodules https://github.com/cpluser09/lama-practice.git
+cd lama-practice
+
+# 启动服务（后台运行）
+docker-compose up -d --build
+
+# 查看日志
+docker-compose logs -f
+```
+
+#### 2. 更新服务器代码
+
+当 GitHub 仓库有更新时，使用以下命令更新服务器：
+
+```bash
+# SSH 连接到服务器
+ssh user@your-server.com
+
+# 进入项目目录
+cd lama-practice
+
+# 拉取最新代码（包括子模块更新）
+git pull
+git submodule update --remote --merge
+
+# 重新构建并启动服务
+docker-compose up -d --build
+
+# 查看服务状态
+docker-compose ps
+```
+
+#### 一键更新脚本（可选）
+
+创建 `update.sh` 脚本实现一键更新：
+
+```bash
+#!/bin/bash
+# update.sh - 服务器更新脚本
+
+cd /path/to/lama-practice
+git pull
+git submodule update --remote --merge
+docker-compose down
+docker-compose up -d --build
+echo "Service updated successfully!"
+```
+
+使用方式：
+```bash
+chmod +x update.sh
+./update.sh
+```
+
 ## 部署方式
 
 ### 使用 Docker Compose (推荐)
@@ -10,7 +88,11 @@
 # 构建并启动服务
 docker-compose up --build
 
-# 服务将在 http://localhost:5000 启动
+# 后台运行
+docker-compose up -d --build
+
+# 停止服务
+docker-compose down
 ```
 
 ### 使用 Docker
@@ -74,6 +156,22 @@ with open('output.png', 'wb') as f:
     f.write(response.content)
 ```
 
+## Web 界面功能
+
+### 图像对比查看器
+- **滑动对比**：拖动滑块或点击图像任意位置查看修复前后对比
+- **一键切换**：通过按钮快速切换查看原图、结果或滑动对比模式
+- **响应式设计**：支持桌面和移动端访问
+
+### 测试图片
+内置 6 种测试场景，覆盖常见修复需求：
+- 文字去除 - 移除图片上的文字水印
+- 物体移除 - 删除不需要的物体
+- 划痕修复 - 修复照片划痕和斑点
+- 人脸修复 - 修复人脸缺失部分
+- 水印移除 - 去除预览水印
+- 旧照片修复 - 修复破损的老照片
+
 ## 测试
 
 运行测试脚本：
@@ -86,8 +184,11 @@ python test_client.py
 
 ```
 .
-├── lama/                    # LaMa 原始项目
+├── lama/                    # LaMa 原始项目 (git submodule)
 ├── lama_service.py          # Flask Web 服务
+├── templates/               # Web 界面模板
+│   └── index.html          # 主页面（含对比查看器）
+├── generate_test_images.py  # 测试图片生成脚本
 ├── Dockerfile               # Docker 镜像配置
 ├── docker-compose.yml       # Docker Compose 配置
 ├── requirements-service.txt # Python 依赖

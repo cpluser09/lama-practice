@@ -48,23 +48,27 @@
             padding: 30px;
         }
 
-        /* Test images section */
-        .test-images {
+        /* Test images sidebar - vertical list on left */
+        .test-sidebar {
             background: #f8f9fa;
-            padding: 15px 20px;
+            padding: 15px;
             border-radius: 12px;
-            margin-bottom: 20px;
+            max-height: 700px;
+            overflow-y: auto;
         }
 
-        .test-images h3 {
+        .test-sidebar h3 {
             margin-bottom: 12px;
             color: #333;
-            font-size: 15px;
+            font-size: 14px;
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ddd;
         }
 
-        .test-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        .test-list {
+            display: flex;
+            flex-direction: column;
             gap: 10px;
         }
 
@@ -75,39 +79,56 @@
             border: 2px solid transparent;
             transition: all 0.2s;
             background: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px;
         }
 
         .test-item:hover {
             border-color: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .test-item img {
-            width: 100%;
-            height: 70px;
+            width: 80px;
+            height: 60px;
             object-fit: cover;
-            display: block;
+            border-radius: 6px;
+            flex-shrink: 0;
         }
 
         .test-item-label {
-            padding: 6px;
-            font-size: 11px;
-            color: #666;
-            text-align: center;
-            background: white;
+            font-size: 12px;
+            color: #555;
+            text-align: left;
         }
 
-        /* Two column workspace */
+        /* Three column workspace */
         .workspace {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            grid-template-columns: 140px 1fr 1fr;
+            gap: 20px;
+            align-items: start;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
             .workspace {
                 grid-template-columns: 1fr;
+            }
+            .test-sidebar {
+                max-height: 200px;
+            }
+            .test-list {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            .test-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            .test-item-label {
+                text-align: center;
             }
         }
 
@@ -486,21 +507,18 @@
         </header>
 
         <div class="main-content">
-            <div class="info-box">
-                <p><strong>使用说明：</strong>上传图片后，使用鼠标在图片上绘制需要修复的区域。支持矩形选择和自由涂抹两种模式。</p>
-            </div>
-
-            <div class="test-images">
-                <h3>测试图片</h3>
-                <div class="test-grid" id="testGrid">
-                    <!-- Test images will be loaded here -->
-                </div>
-            </div>
-
             <div class="error-message" id="errorMessage"></div>
 
             <div class="workspace">
-                <!-- Left: Input Panel -->
+                <!-- Left: Test Images Sidebar -->
+                <div class="test-sidebar">
+                    <h3>测试图片</h3>
+                    <div class="test-list" id="testList">
+                        <!-- Test images will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Middle: Editor Panel -->
                 <div class="panel">
                     <div class="panel-title">编辑</div>
 
@@ -627,16 +645,16 @@
         });
 
         function loadTestImages() {
-            const grid = document.getElementById('testGrid');
+            const list = document.getElementById('testList');
             testImages.forEach(test => {
                 const item = document.createElement('div');
                 item.className = 'test-item';
                 item.innerHTML = `
-                    <img src="${test.url}" alt="${test.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%2280%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%2280%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EN/A%3C/text%3E%3C/svg%3E'">
+                    <img src="${test.url}" alt="${test.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2260%22%3E%3Crect fill=%22%23ddd%22 width=%2280%22 height=%2260%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EN/A%3C/text%3E%3C/svg%3E'">
                     <div class="test-item-label">${test.name}</div>
                 `;
                 item.onclick = () => loadTestImage(test);
-                grid.appendChild(item);
+                list.appendChild(item);
             });
         }
 

@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             background: white;
             border-radius: 16px;
@@ -107,8 +107,8 @@
         /* Three column workspace */
         .workspace {
             display: grid;
-            grid-template-columns: 140px 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 110px 1fr 1fr;
+            gap: 15px;
             align-items: start;
         }
 
@@ -744,8 +744,10 @@
                 loadedImage = img;
 
                 // Set canvas size to match image
-                const maxWidth = 550;
-                const maxHeight = 450;
+                // Internal resolution matches original image for full-quality processing
+                // Display size is scaled down to fit UI while maintaining aspect ratio
+                const maxWidth = 600;
+                const maxHeight = 550;
                 let width = img.width;
                 let height = img.height;
 

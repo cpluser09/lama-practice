@@ -409,6 +409,112 @@
             border-radius: 8px;
             background: #f0f0f0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .result-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Image viewer modal */
+        .image-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .image-modal.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .modal-image-container {
+            position: relative;
+            max-width: 95%;
+            max-height: 90%;
+            overflow: hidden;
+            cursor: grab;
+        }
+
+        .modal-image-container.dragging {
+            cursor: grabbing;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 90vh;
+            display: block;
+            user-select: none;
+            transition: transform 0.1s ease-out;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+            z-index: 10001;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .modal-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10001;
+        }
+
+        .modal-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .modal-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-info {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            color: white;
+            font-size: 14px;
+            opacity: 0.7;
         }
 
         .download-btn {
@@ -595,17 +701,33 @@
                     <div class="result-grid">
                         <div class="result-item">
                             <h4>原图</h4>
-                            <img class="result-image" id="originalImage" alt="Original">
+                            <img class="result-image" id="originalImage" alt="Original" onclick="openImageViewer('original')">
                         </div>
                         <div class="result-item">
                             <h4>修复后</h4>
-                            <img class="result-image" id="resultImage" alt="Result">
+                            <img class="result-image" id="resultImage" alt="Result" onclick="openImageViewer('result')">
                         </div>
                     </div>
 
                     <button class="download-btn" onclick="downloadResult()">下载结果</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Image Viewer Modal -->
+    <div class="image-modal" id="imageModal" onclick="closeModal(event)">
+        <span class="modal-close" onclick="closeModal(event)">&times;</span>
+        <div class="modal-info" id="modalInfo"></div>
+        <div class="modal-content">
+            <div class="modal-image-container" id="modalImageContainer">
+                <img class="modal-image" id="modalImage" src="" alt="Full size">
+            </div>
+        </div>
+        <div class="modal-controls" onclick="event.stopPropagation()">
+            <button class="modal-btn" onclick="zoomOut()">➖ 缩小</button>
+            <button class="modal-btn" onclick="resetZoom()">↺ 恢复</button>
+            <button class="modal-btn" onclick="zoomIn()">➕ 放大</button>
         </div>
     </div>
 
@@ -938,12 +1060,26 @@
 
             if (drawMode === 'rectangle') {
                 renderCanvas();
-                // Preview rectangle
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]);
-                ctx.strokeRect(startX, startY, coords.x - startX, coords.y - startY);
+                // Preview rectangle with better visibility
+                const rectX = Math.min(startX, coords.x);
+                const rectY = Math.min(startY, coords.y);
+                const rectW = Math.abs(coords.x - startX);
+                const rectH = Math.abs(coords.y - startY);
+
+                // Draw semi-transparent white fill to show masked area
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(rectX, rectY, rectW, rectH);
+
+                // Draw border with thicker line
+                ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+                ctx.lineWidth = Math.max(3, canvas.width / 500); // Scale line width with image size
                 ctx.setLineDash([]);
+                ctx.strokeRect(rectX, rectY, rectW, rectH);
+
+                // Draw contrast border
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+                ctx.lineWidth = Math.max(2, canvas.width / 700);
+                ctx.strokeRect(rectX - 1, rectY - 1, rectW + 2, rectH + 2);
             } else if (drawMode === 'brush') {
                 maskCtx.fillStyle = 'white';
                 maskCtx.beginPath();
@@ -1026,10 +1162,17 @@
                 formData.append('image', imageFile);
                 formData.append('mask', new File([maskBlob], 'mask.png', { type: 'image/png' }));
 
+                // Create abort controller for timeout (10 minutes for large images)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 600000);
+
                 const response = await fetch('/inpaint', {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 if (!response.ok) {
                     throw new Error('处理失败，请稍后重试');
@@ -1045,7 +1188,11 @@
                 resultPanel.classList.add('show');
 
             } catch (error) {
-                showError('处理失败: ' + error.message);
+                if (error.name === 'AbortError') {
+                    showError('处理超时: 图片太大，处理时间过长。请尝试缩小图片或使用较小的掩码区域。');
+                } else {
+                    showError('处理失败: ' + error.message);
+                }
             } finally {
                 loading.classList.remove('show');
                 processBtn.disabled = false;
@@ -1069,6 +1216,155 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
+
+        // Image Viewer Modal
+        let modalZoom = 1;
+        let modalPanX = 0;
+        let modalPanY = 0;
+        let isDraggingModal = false;
+        let modalDragStartX = 0;
+        let modalDragStartY = 0;
+
+        function openImageViewer(type) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            const modalInfo = document.getElementById('modalInfo');
+
+            const imgId = type === 'original' ? 'originalImage' : 'resultImage';
+            const src = document.getElementById(imgId).src;
+
+            if (!src || src === '') return;
+
+            modalImg.src = src;
+
+            // Get image dimensions
+            const img = new Image();
+            img.onload = () => {
+                modalInfo.textContent = `${img.naturalWidth} x ${img.naturalHeight} px`;
+            };
+            img.src = src;
+
+            // Reset zoom and pan
+            modalZoom = 1;
+            modalPanX = 0;
+            modalPanY = 0;
+            updateModalTransform();
+
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+
+            // Set up pan events
+            setupModalPan();
+        }
+
+        function closeModal(event) {
+            if (event && event.target.classList.contains('modal-btn')) return;
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        function setupModalPan() {
+            const container = document.getElementById('modalImageContainer');
+            const img = document.getElementById('modalImage');
+
+            container.onmousedown = (e) => {
+                if (modalZoom > 1) {
+                    isDraggingModal = true;
+                    modalDragStartX = e.clientX - modalPanX;
+                    modalDragStartY = e.clientY - modalPanY;
+                    container.classList.add('dragging');
+                }
+            };
+
+            document.onmousemove = (e) => {
+                if (isDraggingModal) {
+                    e.preventDefault();
+                    modalPanX = e.clientX - modalDragStartX;
+                    modalPanY = e.clientY - modalDragStartY;
+                    updateModalTransform();
+                }
+            };
+
+            document.onmouseup = () => {
+                isDraggingModal = false;
+                container.classList.remove('dragging');
+            };
+
+            // Touch support
+            container.ontouchstart = (e) => {
+                if (modalZoom > 1 && e.touches.length === 1) {
+                    isDraggingModal = true;
+                    modalDragStartX = e.touches[0].clientX - modalPanX;
+                    modalDragStartY = e.touches[0].clientY - modalPanY;
+                }
+            };
+
+            container.ontouchmove = (e) => {
+                if (isDraggingModal && e.touches.length === 1) {
+                    e.preventDefault();
+                    modalPanX = e.touches[0].clientX - modalDragStartX;
+                    modalPanY = e.touches[0].clientY - modalDragStartY;
+                    updateModalTransform();
+                }
+            };
+
+            container.ontouchend = () => {
+                isDraggingModal = false;
+            };
+
+            // Mouse wheel zoom
+            container.onwheel = (e) => {
+                e.preventDefault();
+                if (e.deltaY < 0) {
+                    zoomIn();
+                } else {
+                    zoomOut();
+                }
+            };
+        }
+
+        function updateModalTransform() {
+            const img = document.getElementById('modalImage');
+            img.style.transform = `translate(${modalPanX}px, ${modalPanY}px) scale(${modalZoom})`;
+        }
+
+        function zoomIn() {
+            modalZoom = Math.min(modalZoom * 1.25, 10);
+            updateModalTransform();
+        }
+
+        function zoomOut() {
+            modalZoom = Math.max(modalZoom / 1.25, 0.5);
+            if (modalZoom === 1) {
+                modalPanX = 0;
+                modalPanY = 0;
+            }
+            updateModalTransform();
+        }
+
+        function resetZoom() {
+            modalZoom = 1;
+            modalPanX = 0;
+            modalPanY = 0;
+            updateModalTransform();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('imageModal');
+            if (!modal.classList.contains('show')) return;
+
+            if (e.key === 'Escape') {
+                closeModal();
+            } else if (e.key === '+' || e.key === '=') {
+                zoomIn();
+            } else if (e.key === '-' || e.key === '_') {
+                zoomOut();
+            } else if (e.key === '0') {
+                resetZoom();
+            }
+        });
     </script>
 </body>
 </html>

@@ -38,24 +38,38 @@ docker-compose logs -f
 
 #### 2. 更新服务器代码
 
-当 GitHub 仓库有更新时，使用以下命令更新服务器：
+**快速更新（仅修改网页/服务代码）：**
 
 ```bash
-# SSH 连接到服务器
-ssh user@your-server.com
+# 拉取最新代码
+git pull
 
-# 进入项目目录
-cd lama-practice
+# 重启容器加载新代码（无需重新构建，只需几秒）
+docker-compose restart lama-service
 
+# 或者使用一键脚本
+./reload.sh
+```
+
+**完整更新（依赖/模型变化时）：**
+
+```bash
 # 拉取最新代码（包括子模块更新）
 git pull
 git submodule update --remote --merge
 
-# 重新构建并启动服务
+# 重新构建并启动服务（首次部署或依赖变化时使用）
 docker-compose up -d --build
+```
 
-# 查看服务状态
-docker-compose ps
+**开发模式（代码热加载）：**
+
+```bash
+# 启动开发模式，代码通过 volume 挂载，修改后自动生效
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# 修改代码后只需重启容器即可（无需重建）
+docker-compose restart lama-service
 ```
 
 #### 一键更新脚本（可选）
@@ -195,6 +209,27 @@ python test_client.py
 ├── test_client.py           # 测试客户端
 └── README.md                # 本文档
 ```
+
+## 常见问题
+
+### 为什么 `docker-compose up -d --build` 花费很长时间？
+
+完整重建会重新下载所有依赖和模型（约 200MB），需要几分钟。如果只是修改了网页或服务代码，使用快速更新：
+
+```bash
+# 快速更新（几秒钟）
+docker-compose restart lama-service
+```
+
+### 如何区分什么时候需要完整重建？
+
+| 变更内容 | 更新方式 |
+|---------|---------|
+| 网页 HTML/CSS | `docker-compose restart` |
+| 服务代码 lama_service.py | `docker-compose restart` |
+| 添加新的 Python 依赖 | `docker-compose up -d --build` |
+| 修改 Dockerfile | `docker-compose up -d --build` |
+| 模型更新 | `docker-compose up -d --build --no-cache` |
 
 ## 注意事项
 

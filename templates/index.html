@@ -204,16 +204,51 @@
 
         .result-container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
+            flex-direction: row;
+            justify-content: center;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .result-item {
+            flex: 1;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .result-item h3 {
+            margin-bottom: 15px;
+            color: #555;
+            font-size: 16px;
         }
 
         .result-image {
             max-width: 100%;
-            max-height: 600px;
+            max-height: 400px;
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .download-btn {
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 1024px) {
+            .result-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .result-item {
+                max-width: 100%;
+            }
         }
 
         .loading {
@@ -281,122 +316,6 @@
 
         .download-btn:hover {
             background: #45a049;
-        }
-
-        /* Comparison Viewer Styles */
-        .comparison-wrapper {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        }
-
-        .comparison-viewer {
-            position: relative;
-            width: 100%;
-            user-select: none;
-        }
-
-        .comparison-img {
-            display: block;
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-        }
-
-        .comparison-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 50%;
-            height: 100%;
-            overflow: hidden;
-            border-right: 3px solid white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-            transition: width 0.05s ease-out;
-        }
-
-        .comparison-overlay img {
-            display: block;
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            max-width: none;
-        }
-
-        .comparison-slider {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 50%;
-            width: 40px;
-            transform: translateX(-50%);
-            cursor: ew-resize;
-            z-index: 10;
-        }
-
-        .comparison-slider-handle {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 36px;
-            height: 36px;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-
-        .comparison-label {
-            position: absolute;
-            bottom: 10px;
-            padding: 5px 12px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            font-size: 12px;
-            border-radius: 4px;
-            font-weight: 500;
-        }
-
-        .comparison-label.before {
-            left: 10px;
-        }
-
-        .comparison-label.after {
-            right: 10px;
-        }
-
-        .comparison-toggle {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            justify-content: center;
-        }
-
-        .toggle-btn {
-            padding: 10px 20px;
-            background: #f0f0f0;
-            border: 2px solid transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .toggle-btn:hover {
-            background: #e0e0e0;
-        }
-
-        .toggle-btn.active {
-            background: #667eea;
-            color: white;
         }
 
         .test-images {
@@ -526,25 +445,15 @@
             <div class="result-section" id="resultSection">
                 <h2>修复结果</h2>
                 <div class="result-container">
-                    <div class="comparison-toggle">
-                        <button class="toggle-btn active" id="btnSlider" onclick="setComparisonMode('slider')">滑动对比</button>
-                        <button class="toggle-btn" id="btnOriginal" onclick="showOriginal()">原图</button>
-                        <button class="toggle-btn" id="btnResult" onclick="showResult()">结果</button>
+                    <div class="result-item">
+                        <h3>原图</h3>
+                        <img class="result-image" id="originalImage" alt="Original">
                     </div>
-                    <div class="comparison-wrapper" id="comparisonWrapper">
-                        <div class="comparison-viewer" id="comparisonViewer">
-                            <img class="comparison-img" id="originalImage" alt="Original">
-                            <div class="comparison-overlay" id="comparisonOverlay">
-                                <img id="resultOverlayImage" alt="Result">
-                            </div>
-                            <div class="comparison-slider" id="comparisonSlider">
-                                <div class="comparison-slider-handle">⟷</div>
-                            </div>
-                            <span class="comparison-label before">修复前</span>
-                            <span class="comparison-label after">修复后</span>
-                        </div>
+                    <div class="result-item">
+                        <h3>修复后</h3>
+                        <img class="result-image" id="resultImage" alt="Result">
+                        <button class="download-btn" onclick="downloadResult()">下载结果</button>
                     </div>
-                    <button class="download-btn" onclick="downloadResult()">下载结果</button>
                 </div>
             </div>
         </div>
@@ -570,7 +479,6 @@
         // Load test images on page load
         document.addEventListener('DOMContentLoaded', () => {
             loadTestImages();
-            setupComparisonSlider();
         });
 
         function loadTestImages() {
@@ -597,71 +505,6 @@
             } catch (e) {
                 console.log('Test image not available:', url);
             }
-        }
-
-        // Comparison slider functionality
-        function setupComparisonSlider() {
-            const viewer = document.getElementById('comparisonViewer');
-            const slider = document.getElementById('comparisonSlider');
-            const overlay = document.getElementById('comparisonOverlay');
-            let isDragging = false;
-
-            function updateSlider(x) {
-                const rect = viewer.getBoundingClientRect();
-                let pos = (x - rect.left) / rect.width;
-                pos = Math.max(0, Math.min(1, pos));
-                overlay.style.width = (pos * 100) + '%';
-                slider.style.left = (pos * 100) + '%';
-            }
-
-            slider.addEventListener('mousedown', () => isDragging = true);
-            slider.addEventListener('touchstart', () => isDragging = true);
-
-            document.addEventListener('mouseup', () => isDragging = false);
-            document.addEventListener('touchend', () => isDragging = false);
-
-            viewer.addEventListener('mousemove', (e) => {
-                if (isDragging) updateSlider(e.clientX);
-            });
-
-            viewer.addEventListener('touchmove', (e) => {
-                if (isDragging) updateSlider(e.touches[0].clientX);
-            });
-
-            viewer.addEventListener('click', (e) => {
-                if (!isDragging) updateSlider(e.clientX);
-            });
-        }
-
-        function setComparisonMode(mode) {
-            currentMode = mode;
-            const viewer = document.getElementById('comparisonViewer');
-            const overlay = document.getElementById('comparisonOverlay');
-            const slider = document.getElementById('comparisonSlider');
-
-            document.getElementById('btnSlider').classList.toggle('active', mode === 'slider');
-            document.getElementById('btnOriginal').classList.toggle('active', mode === 'original');
-            document.getElementById('btnResult').classList.toggle('active', mode === 'result');
-
-            if (mode === 'slider') {
-                overlay.style.width = '50%';
-                slider.style.display = 'block';
-                overlay.style.display = 'block';
-            } else if (mode === 'original') {
-                overlay.style.width = '0%';
-                slider.style.display = 'none';
-            } else {
-                overlay.style.width = '100%';
-                slider.style.display = 'none';
-            }
-        }
-
-        function showOriginal() {
-            setComparisonMode('original');
-        }
-
-        function showResult() {
-            setComparisonMode('result');
         }
 
         // Image upload handling
@@ -801,12 +644,10 @@
                 resultBlob = await response.blob();
                 const resultUrl = URL.createObjectURL(resultBlob);
 
-                // Set up comparison viewer
+                // Set up images
                 document.getElementById('originalImage').src = originalImageDataUrl;
-                document.getElementById('resultOverlayImage').src = resultUrl;
+                document.getElementById('resultImage').src = resultUrl;
 
-                // Reset slider to middle
-                setComparisonMode('slider');
                 resultSection.classList.add('show');
 
             } catch (error) {

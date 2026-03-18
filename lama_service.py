@@ -39,9 +39,6 @@ from saicinpainting.training.trainers import load_checkpoint
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__, static_folder=str(STATIC_FOLDER))
-CORS(app)
-
 # Configuration
 UPLOAD_FOLDER = '/tmp/uploads'
 OUTPUT_FOLDER = '/tmp/outputs'
@@ -54,6 +51,9 @@ TEST_FOLDER = STATIC_FOLDER / 'test'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 os.makedirs(TEST_FOLDER, exist_ok=True)
+
+app = Flask(__name__, static_folder=str(STATIC_FOLDER))
+CORS(app)
 
 # Increase max content length for large images
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB

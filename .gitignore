@@ -35,9 +35,14 @@ outputs/
 *.png
 *.jpg
 *.jpeg
+# But keep test-images
+!static/test-images/*.png
+!static/test-images/*.jpg
 
 # Static test images (generated)
 static/
+# But keep test-images for web UI
+!static/test-images/
 
 # IDE
 .vscode/

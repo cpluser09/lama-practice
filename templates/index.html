@@ -542,11 +542,22 @@
             border-radius: 8px;
             font-size: 13px;
             color: #555;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
-        .processing-time .time-value {
+        .processing-time .time-value,
+        .processing-time .resolution-value {
             font-weight: 600;
             color: #667eea;
+        }
+
+        .processing-time .info-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         /* Loading */
@@ -567,7 +578,18 @@
             border-top: 3px solid #667eea;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 15px;
+        }
+
+        .loading-status {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .loading-detail {
+            font-size: 12px;
+            color: #888;
         }
 
         @keyframes spin {
@@ -710,7 +732,8 @@
 
                     <div class="loading" id="loading">
                         <div class="spinner"></div>
-                        <p>正在处理图片，请稍候...</p>
+                        <p class="loading-status" id="loadingStatus">正在处理图片，请稍候...</p>
+                        <p class="loading-detail" id="loadingDetail">准备中...</p>
                     </div>
 
                     <div class="result-grid">
@@ -725,7 +748,9 @@
                     </div>
 
                     <div class="processing-time" id="processingTime" style="display: none;">
-                        处理耗时: <span class="time-value" id="timeValue">--</span>
+                        <span class="info-item">⏱️ 处理耗时: <span class="time-value" id="timeValue">--</span></span>
+                        <span class="info-item">📐 输入: <span class="resolution-value" id="inputResolution">--</span></span>
+                        <span class="info-item">📐 输出: <span class="resolution-value" id="outputResolution">--</span></span>
                     </div>
 
                     <button class="download-btn" onclick="downloadResult()">下载结果</button>
@@ -1171,8 +1196,12 @@
             loading.classList.add('show');
             processBtn.disabled = true;
 
+            // Reset loading status
+            updateLoadingStatus('准备中...', '正在准备上传数据');
+
             try {
                 // Convert mask canvas to blob
+                updateLoadingStatus('生成掩码...', '正在将掩码转换为图片');
                 const maskBlob = await new Promise(resolve => {
                     activeMaskCanvas.toBlob(resolve, 'image/png');
                 });
@@ -1184,6 +1213,8 @@
                 // Create abort controller for timeout (10 minutes for large images)
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 600000);
+
+                updateLoadingStatus('上传中...', '正在上传图片到服务器');
 
                 const response = await fetch('/inpaint', {
                     method: 'POST',
@@ -1197,8 +1228,12 @@
                     throw new Error('处理失败，请稍后重试');
                 }
 
-                // Get processing time from header
+                updateLoadingStatus('推理中...', 'LaMa模型正在处理图片');
+
+                // Get processing info from headers
                 const processingTime = response.headers.get('X-Processing-Time');
+                const inputRes = response.headers.get('X-Input-Resolution');
+                const outputRes = response.headers.get('X-Output-Resolution');
 
                 resultBlob = await response.blob();
                 const resultUrl = URL.createObjectURL(resultBlob);
@@ -1207,13 +1242,22 @@
                 document.getElementById('originalImage').src = originalImageDataUrl;
                 document.getElementById('resultImage').src = resultUrl;
 
-                // Show processing time
+                // Show processing info
+                const timeContainer = document.getElementById('processingTime');
+                const timeElement = document.getElementById('timeValue');
+                const inputResElement = document.getElementById('inputResolution');
+                const outputResElement = document.getElementById('outputResolution');
+
                 if (processingTime) {
-                    const timeElement = document.getElementById('timeValue');
-                    const timeContainer = document.getElementById('processingTime');
                     timeElement.textContent = processingTime + ' 秒';
-                    timeContainer.style.display = 'block';
                 }
+                if (inputRes) {
+                    inputResElement.textContent = inputRes + ' px';
+                }
+                if (outputRes) {
+                    outputResElement.textContent = outputRes + ' px';
+                }
+                timeContainer.style.display = 'block';
 
                 resultPanel.classList.add('show');
 
@@ -1233,6 +1277,13 @@
             const errorMessage = document.getElementById('errorMessage');
             errorMessage.textContent = message;
             errorMessage.classList.add('show');
+        }
+
+        function updateLoadingStatus(status, detail) {
+            const statusEl = document.getElementById('loadingStatus');
+            const detailEl = document.getElementById('loadingDetail');
+            if (statusEl) statusEl.textContent = status;
+            if (detailEl) detailEl.textContent = detail;
         }
 
         function downloadResult() {

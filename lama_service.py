@@ -231,6 +231,8 @@ def inpaint():
         logger.info(f"Inpainting completed successfully in {processing_time:.2f}s")
         response = send_file(result_bytes, mimetype='image/png')
         response.headers['X-Processing-Time'] = f'{processing_time:.2f}'
+        response.headers['X-Input-Resolution'] = f'{image_np.shape[1]}x{image_np.shape[0]}'
+        response.headers['X-Output-Resolution'] = f'{result_np.shape[1]}x{result_np.shape[0]}'
         return response
 
     except Exception as e:

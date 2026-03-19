@@ -36,6 +36,8 @@ def check_and_install_dependencies():
         'pytorch-lightning': 'pytorch_lightning',
         'gin-config': 'gin',
         'flatten-dict': 'flatten_dict',
+        'hydra-core': 'hydra',
+        'omegaconf': 'omegaconf',
     }
 
     def get_module_name(package_line: str) -> str:
@@ -110,6 +112,7 @@ import io
 import logging
 import os
 import traceback
+import functools
 
 import cv2
 import numpy as np
@@ -119,6 +122,14 @@ from flask import Flask, jsonify, render_template, request, send_file
 from flask_cors import CORS
 from omegaconf import OmegaConf
 from PIL import Image, ImageDraw
+
+# Fix PyTorch 2.6+ weights_only issue
+_original_torch_load = torch.load
+@functools.wraps(_original_torch_load)
+def _patched_torch_load(*args, **kwargs):
+    kwargs.setdefault('weights_only', False)
+    return _original_torch_load(*args, **kwargs)
+torch.load = _patched_torch_load
 
 from saicinpainting.evaluation.utils import move_to_device
 from saicinpainting.training.trainers import load_checkpoint

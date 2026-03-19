@@ -219,14 +219,19 @@ def inpaint():
 
         # Run inpainting
         logger.info(f"Processing image of size {image_np.shape}")
+        import time
+        start_time = time.time()
         result_np = inpaint_image(image_np, mask_np)
+        processing_time = time.time() - start_time
 
         # Encode result
         _, buffer = cv2.imencode('.png', result_np)
         result_bytes = io.BytesIO(buffer.tobytes())
 
-        logger.info("Inpainting completed successfully")
-        return send_file(result_bytes, mimetype='image/png')
+        logger.info(f"Inpainting completed successfully in {processing_time:.2f}s")
+        response = send_file(result_bytes, mimetype='image/png')
+        response.headers['X-Processing-Time'] = f'{processing_time:.2f}'
+        return response
 
     except Exception as e:
         logger.error(f"Error during inpainting: {traceback.format_exc()}")

@@ -232,6 +232,24 @@
             display: block;
         }
 
+        /* Image info display */
+        .image-info {
+            background: #f0f7ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #555;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .image-info .info-value {
+            font-weight: 600;
+            color: #667eea;
+        }
+
         .control-row {
             display: flex;
             align-items: center;
@@ -562,9 +580,18 @@
 
         /* Loading */
         .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 1000;
             display: none;
             text-align: center;
-            padding: 20px;
+            min-width: 300px;
         }
 
         .loading.show {
@@ -672,6 +699,10 @@
                         </label>
                     </div>
 
+                    <div class="image-info" id="imageInfo" style="display: none;">
+                        <span>📐 图片尺寸: <span class="info-value" id="imageResolution">--</span></span>
+                    </div>
+
                     <div class="empty-state" id="emptyState">
                         <div class="empty-state-icon">🖼️</div>
                         <div>请上传图片开始编辑</div>
@@ -730,12 +761,6 @@
                 <div class="panel result-panel" id="resultPanel">
                     <div class="panel-title">结果</div>
 
-                    <div class="loading" id="loading">
-                        <div class="spinner"></div>
-                        <p class="loading-status" id="loadingStatus">正在处理图片，请稍候...</p>
-                        <p class="loading-detail" id="loadingDetail">准备中...</p>
-                    </div>
-
                     <div class="result-grid">
                         <div class="result-item">
                             <h4>原图</h4>
@@ -755,6 +780,14 @@
 
                     <button class="download-btn" onclick="downloadResult()">下载结果</button>
                 </div>
+            </div>
+
+            <!-- Loading overlay - outside result panel so it can show during processing -->
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p class="loading-status" id="loadingStatus">正在处理图片，请稍候...</p>
+                <p class="loading-detail" id="loadingDetail">准备中...</p>
+            </div>
             </div>
         </div>
     </div>
@@ -962,6 +995,10 @@
                 document.getElementById('canvasContainer').classList.add('show');
                 document.getElementById('drawingControls').classList.add('show');
                 document.getElementById('processBtn').disabled = false;
+
+                // Show image resolution
+                document.getElementById('imageResolution').textContent = `${img.width} x ${img.height} px`;
+                document.getElementById('imageInfo').style.display = 'flex';
 
                 // Store original for display
                 originalImageDataUrl = URL.createObjectURL(imageBlob);
@@ -1196,8 +1233,14 @@
             loading.classList.add('show');
             processBtn.disabled = true;
 
-            // Reset loading status
+            // Reset loading status and clear previous processing info
             updateLoadingStatus('准备中...', '正在准备上传数据');
+            const timeContainer = document.getElementById('processingTime');
+            // Remove any previously added inference time elements
+            const oldInference = timeContainer.querySelector('.info-item:last-child');
+            if (oldInference && oldInference.textContent.includes('算法推理')) {
+                timeContainer.removeChild(oldInference);
+            }
 
             try {
                 // Convert mask canvas to blob
@@ -1214,7 +1257,9 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 600000);
 
-                updateLoadingStatus('上传中...', '正在上传图片到服务器');
+                // Give UI a chance to update before the fetch blocks
+                await new Promise(resolve => setTimeout(resolve, 50));
+                updateLoadingStatus('服务器处理中...', '上传完成，正在执行LaMa推理（可能需要较长时间）');
 
                 const response = await fetch('/inpaint', {
                     method: 'POST',
@@ -1228,10 +1273,12 @@
                     throw new Error('处理失败，请稍后重试');
                 }
 
-                updateLoadingStatus('推理中...', 'LaMa模型正在处理图片');
+                // Set status to show we're receiving the result
+                updateLoadingStatus('接收结果...', '正在下载处理后的图片');
 
                 // Get processing info from headers
                 const processingTime = response.headers.get('X-Processing-Time');
+                const inferenceTime = response.headers.get('X-Inference-Time');
                 const inputRes = response.headers.get('X-Input-Resolution');
                 const outputRes = response.headers.get('X-Output-Resolution');
 
@@ -1242,7 +1289,7 @@
                 document.getElementById('originalImage').src = originalImageDataUrl;
                 document.getElementById('resultImage').src = resultUrl;
 
-                // Show processing info
+                // Show processing info with separate inference time
                 const timeContainer = document.getElementById('processingTime');
                 const timeElement = document.getElementById('timeValue');
                 const inputResElement = document.getElementById('inputResolution');
@@ -1250,6 +1297,13 @@
 
                 if (processingTime) {
                     timeElement.textContent = processingTime + ' 秒';
+                }
+                if (inferenceTime) {
+                    // Add inference time as a new item
+                    const inferenceInfo = document.createElement('span');
+                    inferenceInfo.className = 'info-item';
+                    inferenceInfo.innerHTML = `🧠 算法推理: <span class="resolution-value">${inferenceTime} 秒</span>`;
+                    timeContainer.appendChild(inferenceInfo);
                 }
                 if (inputRes) {
                     inputResElement.textContent = inputRes + ' px';

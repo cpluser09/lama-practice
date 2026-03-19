@@ -131,7 +131,12 @@ def resize_image_if_needed(image_np, max_size=MAX_IMAGE_SIZE, default_size=DEFAU
 
 
 def inpaint_image(image_np, mask_np):
-    """Run inpainting on image with mask"""
+    """Run inpainting on image with mask
+
+    Returns: (result_bgr, inference_time)
+    """
+    import time
+
     model_obj = load_model()
 
     # Resize if needed
@@ -153,16 +158,21 @@ def inpaint_image(image_np, mask_np):
         'mask': mask_tensor
     }
 
+    # Measure pure inference time (model forward pass only)
     with torch.no_grad():
         batch = move_to_device(batch, device)
         batch['mask'] = (batch['mask'] > 0) * 1
+
+        inference_start = time.time()
         batch = model_obj(batch)
+        inference_time = time.time() - inference_start
+
         result = batch['inpainted'][0].permute(1, 2, 0).detach().cpu().numpy()
 
     result = np.clip(result * 255, 0, 255).astype('uint8')
     result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
 
-    return result_bgr
+    return result_bgr, inference_time
 
 
 @app.route('/health', methods=['GET'])
@@ -221,16 +231,17 @@ def inpaint():
         logger.info(f"Processing image of size {image_np.shape}")
         import time
         start_time = time.time()
-        result_np = inpaint_image(image_np, mask_np)
-        processing_time = time.time() - start_time
+        result_np, inference_time = inpaint_image(image_np, mask_np)
+        total_time = time.time() - start_time
 
         # Encode result
         _, buffer = cv2.imencode('.png', result_np)
         result_bytes = io.BytesIO(buffer.tobytes())
 
-        logger.info(f"Inpainting completed successfully in {processing_time:.2f}s")
+        logger.info(f"Inpainting completed - Total: {total_time:.2f}s, Inference: {inference_time:.2f}s")
         response = send_file(result_bytes, mimetype='image/png')
-        response.headers['X-Processing-Time'] = f'{processing_time:.2f}'
+        response.headers['X-Processing-Time'] = f'{total_time:.2f}'
+        response.headers['X-Inference-Time'] = f'{inference_time:.2f}'
         response.headers['X-Input-Resolution'] = f'{image_np.shape[1]}x{image_np.shape[0]}'
         response.headers['X-Output-Resolution'] = f'{result_np.shape[1]}x{result_np.shape[0]}'
         return response

@@ -3,8 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LaMa 图像修复服务</title>
+    <title>LaMa Image Inpainting</title>
     <style>
+        :root {
+            --systemBackground: #ffffff;
+            --systemGroupedBackground: #f2f2f7;
+            --systemGray6: #f2f2f7;
+            --systemGray5: #e5e5ea;
+            --systemGray4: #d1d1d6;
+            --systemGray3: #c7c7cc;
+            --systemGray2: #aeaeb2;
+            --systemGray: #8e8e93;
+            --systemBlue: #007aff;
+            --systemGreen: #34c759;
+            --systemRed: #ff3b30;
+            --systemOrange: #ff9500;
+            --label: #000000;
+            --secondaryLabel: #3c3c43;
+            --tertiaryLabel: #3c3c4399;
+            --separator: #c6c6c8;
+
+            --spacingSmall: 8px;
+            --spacingMedium: 16px;
+            --spacingLarge: 24px;
+            --spacingXLarge: 32px;
+
+            --radiusSmall: 8px;
+            --radiusMedium: 12px;
+            --radiusLarge: 16px;
+
+            --shadowSmall: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadowMedium: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadowLarge: 0 8px 32px rgba(0, 0, 0, 0.12);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,1126 +44,936 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: var(--systemBackground);
+            color: var(--label);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             overflow: hidden;
-        }
-
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            text-align: center;
-        }
-
-        header h1 {
-            font-size: 1.8em;
-            margin-bottom: 8px;
-        }
-
-        header p {
-            opacity: 0.9;
-            font-size: 0.95em;
-        }
-
-        .main-content {
-            padding: 30px;
-        }
-
-        /* Test images sidebar - vertical list on left */
-        .test-sidebar {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 12px;
-            max-height: 700px;
-            overflow-y: auto;
-        }
-
-        .test-sidebar h3 {
-            margin-bottom: 12px;
-            color: #333;
-            font-size: 14px;
-            text-align: center;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .test-list {
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            gap: 10px;
         }
 
-        .test-item {
-            cursor: pointer;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 2px solid transparent;
-            transition: all 0.2s;
-            background: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 6px;
-        }
-
-        .test-item:hover {
-            border-color: #667eea;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .test-item img {
-            width: 80px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 6px;
+        /* Navigation */
+        nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 0.5px solid var(--separator);
             flex-shrink: 0;
         }
 
-        .test-item-label {
-            font-size: 12px;
-            color: #555;
-            text-align: left;
-        }
-
-        /* Three column workspace */
-        .workspace {
-            display: grid;
-            grid-template-columns: 110px 1fr 1fr;
-            gap: 15px;
-            align-items: start;
-        }
-
-        @media (max-width: 1100px) {
-            .workspace {
-                grid-template-columns: 1fr;
-            }
-            .test-sidebar {
-                max-height: 200px;
-            }
-            .test-list {
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-            .test-item {
-                flex-direction: column;
-                text-align: center;
-            }
-            .test-item-label {
-                text-align: center;
-            }
-        }
-
-        .panel {
-            background: #fafafa;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .panel-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 15px;
-            text-align: center;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
-
-        /* Upload section */
-        .upload-section {
-            margin-bottom: 20px;
-        }
-
-        .upload-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .upload-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-        }
-
-        .upload-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .upload-btn input {
-            display: none;
-        }
-
-        /* Canvas editor */
-        .canvas-container {
-            position: relative;
-            background: #333;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .canvas-container.show {
-            display: block;
-        }
-
-        .canvas-container canvas {
-            display: block;
-            width: 100%;
-            cursor: crosshair;
-        }
-
-        .empty-state {
-            background: #f0f0f0;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-            color: #999;
-            margin-bottom: 15px;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-            opacity: 0.5;
-        }
-
-        /* Drawing controls */
-        .drawing-controls {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        .drawing-controls.show {
-            display: block;
-        }
-
-        /* Image info display */
-        .image-info {
-            background: #f0f7ff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
-            color: #555;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .image-info .info-value {
-            font-weight: 600;
-            color: #667eea;
-        }
-
-        .control-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-
-        .control-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .control-label {
-            font-size: 13px;
-            color: #555;
-            font-weight: 500;
-            min-width: 60px;
-        }
-
-        .mode-buttons {
-            display: flex;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .mode-btn {
-            flex: 1;
-            padding: 10px 16px;
-            border: 2px solid #ddd;
-            background: white;
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: #555;
-        }
-
-        .mode-btn:hover {
-            border-color: #667eea;
-            background: #f0f2ff;
-        }
-
-        .mode-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: #667eea;
-        }
-
-        .brush-size-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-
-        .brush-size-control input[type="range"] {
-            flex: 1;
-            height: 6px;
-            border-radius: 3px;
-            background: #ddd;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        .brush-size-control input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #667eea;
-            cursor: pointer;
-        }
-
-        .brush-size-control input[type="range"]::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #667eea;
-            cursor: pointer;
-            border: none;
-        }
-
-        .brush-size-value {
-            font-size: 12px;
-            color: #666;
-            min-width: 35px;
-            text-align: center;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .undo-btn {
-            background: #6c757d;
-            color: white;
-        }
-
-        .undo-btn:hover {
-            background: #5a6268;
-        }
-
-        .clear-btn {
-            background: #dc3545;
-            color: white;
-        }
-
-        .clear-btn:hover {
-            background: #c82333;
-        }
-
-        /* Process button */
-        .process-btn {
-            width: 100%;
-            padding: 16px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .process-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            background: #45a049;
-        }
-
-        .process-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Result section */
-        .result-panel {
-            display: none;
-        }
-
-        .result-panel.show {
-            display: block;
-        }
-
-        .result-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .result-item {
-            text-align: center;
-        }
-
-        .result-item h4 {
-            font-size: 13px;
-            color: #555;
-            margin-bottom: 8px;
-        }
-
-        .result-image {
-            width: 100%;
-            aspect-ratio: 4/3;
-            object-fit: contain;
-            border-radius: 8px;
-            background: #f0f0f0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .result-image:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        /* Image viewer modal */
-        .image-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 10000;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .image-modal.show {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-content {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .modal-image-container {
-            position: relative;
-            max-width: 95%;
-            max-height: 90%;
-            overflow: hidden;
-            cursor: grab;
-        }
-
-        .modal-image-container.dragging {
-            cursor: grabbing;
-        }
-
-        .modal-image {
+        .nav-content {
             max-width: 100%;
-            max-height: 90vh;
-            display: block;
-            user-select: none;
-            transition: transform 0.1s ease-out;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            color: white;
-            font-size: 40px;
-            cursor: pointer;
-            z-index: 10001;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-
-        .modal-close:hover {
-            opacity: 1;
-        }
-
-        .modal-controls {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
+            margin: 0 auto;
+            padding: var(--spacingMedium) var(--spacingLarge);
             display: flex;
-            gap: 15px;
-            z-index: 10001;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .modal-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-
-        .modal-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .modal-info {
-            position: absolute;
-            top: 20px;
-            left: 30px;
-            color: white;
-            font-size: 14px;
-            opacity: 0.7;
-        }
-
-        .download-btn {
-            margin-top: 15px;
-            width: 100%;
-            padding: 14px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 15px;
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--spacingSmall);
+            font-size: 17px;
             font-weight: 600;
+            color: var(--label);
+            text-decoration: none;
         }
 
-        .download-btn:hover {
-            background: #45a049;
+        .nav-brand svg {
+            width: 28px;
+            height: 28px;
         }
 
-        .processing-time {
-            text-align: center;
-            margin-top: 15px;
-            padding: 10px;
-            background: #e8f4fd;
-            border-radius: 8px;
+        .device-badge {
+            background: var(--systemGray6);
+            padding: 4px 12px;
+            border-radius: 20px;
             font-size: 13px;
-            color: #555;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .processing-time .time-value,
-        .processing-time .resolution-value {
-            font-weight: 600;
-            color: #667eea;
-        }
-
-        .processing-time .info-item {
+            font-weight: 500;
+            color: var(--secondaryLabel);
             display: flex;
             align-items: center;
             gap: 4px;
         }
 
-        /* Loading */
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            z-index: 1000;
-            display: none;
-            text-align: center;
-            min-width: 300px;
+        .device-badge .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--systemGreen);
         }
 
-        .loading.show {
+        /* Toolbar */
+        .toolbar {
+            background: var(--systemGroupedBackground);
+            padding: var(--spacingSmall) var(--spacingLarge);
+            display: flex;
+            align-items: center;
+            gap: var(--spacingMedium);
+            flex-wrap: wrap;
+            border-bottom: 0.5px solid var(--separator);
+            flex-shrink: 0;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacingSmall);
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 24px;
+            background: var(--separator);
+            margin: 0 var(--spacingSmall);
+        }
+
+        .toolbar-label {
+            font-size: 13px;
+            color: var(--secondaryLabel);
+            font-weight: 500;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            background: var(--systemGray5);
+            color: var(--label);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .btn:hover {
+            background: var(--systemGray4);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--systemBlue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0051d5;
+        }
+
+        .btn-primary:disabled {
+            background: var(--systemGray4);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn.active {
+            background: var(--systemBlue);
+            color: white;
+        }
+
+        /* Segmented Control */
+        .segmented-control {
+            display: flex;
+            background: var(--systemGray5);
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .segmented-control button {
+            flex: 1;
+            padding: 6px 12px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--label);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .segmented-control button.active {
+            background: var(--systemBackground);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 120px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--systemGray4);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        /* Select */
+        select {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--systemGray4);
+            background: var(--systemBackground);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--label);
+            cursor: pointer;
+        }
+
+        /* Main Canvas Area */
+        .main-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--systemGray6);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        #mainCanvas {
             display: block;
+            max-width: 100%;
+            max-height: calc(100vh - 180px);
+            cursor: crosshair;
+            border-radius: var(--radiusMedium);
+            box-shadow: var(--shadowLarge);
+        }
+
+        #mainCanvas.drawing {
+            cursor: crosshair;
+        }
+
+        #mainCanvas.rect-mode {
+            cursor: cell;
+        }
+
+        /* Side Panel */
+        .side-panel {
+            width: 280px;
+            background: var(--systemBackground);
+            border-left: 0.5px solid var(--separator);
+            padding: var(--spacingMedium);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .panel-section {
+            margin-bottom: var(--spacingLarge);
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--secondaryLabel);
+            margin-bottom: var(--spacingSmall);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacingSmall) 0;
+            border-bottom: 0.5px solid var(--systemGray5);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: var(--secondaryLabel);
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--label);
+        }
+
+        /* Test Images List */
+        .test-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacingSmall);
+        }
+
+        .test-item {
+            background: var(--systemGray6);
+            border-radius: var(--radiusMedium);
+            padding: var(--spacingSmall);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1.5px solid transparent;
+        }
+
+        .test-item:hover {
+            background: var(--systemGray5);
+        }
+
+        .test-item.selected {
+            border-color: var(--systemBlue);
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .test-item-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--label);
+        }
+
+        .test-item-meta {
+            font-size: 12px;
+            color: var(--secondaryLabel);
+        }
+
+        /* Progress Overlay */
+        .progress-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .progress-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .progress-card {
+            background: var(--systemBackground);
+            border-radius: var(--radiusLarge);
+            padding: var(--spacingXLarge);
+            box-shadow: var(--shadowLarge);
+            text-align: center;
+            min-width: 320px;
         }
 
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            width: 48px;
+            height: 48px;
+            border: 3px solid var(--systemGray5);
+            border-top-color: var(--systemBlue);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        .loading-status {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 5px;
-        }
-
-        .loading-detail {
-            font-size: 12px;
-            color: #888;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto var(--spacingMedium);
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
-        /* Error message */
-        .error-message {
-            display: none;
-            background: #fee;
-            color: #c33;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 13px;
+        .progress-text {
+            font-size: 17px;
+            font-weight: 500;
+            color: var(--label);
         }
 
-        .error-message.show {
-            display: block;
+        .progress-subtext {
+            font-size: 14px;
+            color: var(--secondaryLabel);
+            margin-top: var(--spacingSmall);
         }
 
-        /* Info box */
-        .info-box {
-            background: #e8f4fd;
-            border-left: 4px solid #2196f3;
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        /* Compare Modal */
+        .compare-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
 
-        .info-box p {
-            color: #555;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-
-        /* Canvas overlay indicator */
-        .canvas-hint {
-            position: absolute;
-            bottom: 10px;
+        /* Live compare hint */
+        .live-compare-hint {
+            position: fixed;
+            bottom: var(--spacingLarge);
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.7);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 8px 16px;
+            padding: var(--spacingSmall) var(--spacingMedium);
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 500;
             pointer-events: none;
+            transition: all 0.3s;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .live-compare-hint.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .live-compare-hint:not(.hidden) {
+            opacity: 1;
+        }
+
+        .compare-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .compare-content {
+            max-width: 95vw;
+            max-height: 95vh;
+            position: relative;
+        }
+
+        .compare-image {
+            max-width: 95vw;
+            max-height: 95vh;
+            display: block;
+            border-radius: var(--radiusMedium);
+        }
+
+        .compare-controls {
+            position: absolute;
+            bottom: var(--spacingLarge);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: var(--spacingMedium);
+            background: rgba(0, 0, 0, 0.7);
+            padding: var(--spacingSmall) var(--spacingMedium);
+            border-radius: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .compare-hint {
+            position: absolute;
+            top: var(--spacingLarge);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: var(--spacingSmall) var(--spacingMedium);
+            border-radius: 20px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: var(--spacingMedium);
+            right: var(--spacingMedium);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* File Upload */
+        .file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-upload-wrapper input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        /* Download Button */
+        .download-btn {
+            background: var(--systemGreen);
+            color: white;
+        }
+
+        .download-btn:hover {
+            background: #28cd41;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .side-panel {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>LaMa 图像修复服务</h1>
-            <p>基于 LaMa (Resolution-robust Large Mask Inpainting) 的智能图像修复</p>
-        </header>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-content">
+            <a href="/" class="nav-brand">
+                <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="24" height="24" rx="6" fill="url(#gradient)" fill-opacity="0.2"/>
+                    <path d="M8 10h12M8 14h8m-8 4h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="2" y1="2" x2="26" y2="26">
+                            <stop offset="0%" stop-color="#007aff"/>
+                            <stop offset="100%" stop-color="#5856d6"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                LaMa Inpainting
+            </a>
+            <div class="device-badge">
+                <span class="status-dot"></span>
+                MPS Active
+            </div>
+        </div>
+    </nav>
 
-        <div class="main-content">
-            <div class="error-message" id="errorMessage"></div>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <span class="toolbar-label">Mode:</span>
+            <div class="segmented-control">
+                <button id="brushMode" class="active" onclick="setMode('brush')">Brush</button>
+                <button id="rectMode" onclick="setMode('rect')">Rectangle</button>
+            </div>
+        </div>
 
-            <div class="workspace">
-                <!-- Left: Test Images Sidebar -->
-                <div class="test-sidebar">
-                    <h3>测试图片</h3>
-                    <div class="test-list" id="testList">
-                        <!-- Test images will be loaded here -->
-                    </div>
+        <div class="toolbar-group" id="brushSettings">
+            <span class="toolbar-label">Size:</span>
+            <input type="range" id="brushSize" min="5" max="100" value="25" oninput="updateBrushSize(this.value)">
+            <span class="toolbar-label" id="brushSizeLabel">25px</span>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+            <button class="btn btn-sm" onclick="document.getElementById('imageUpload').click()">
+                📁 Upload
+            </button>
+            <span class="toolbar-label">Image:</span>
+            <select id="testImageSelect" onchange="loadTestImage(this.value)">
+                <option value="4096">4096 × 2730 (11.8MP)</option>
+                <option value="2048">2048 × 1365 (2.8MP)</option>
+                <option value="1024">1024 × 682 (0.7MP)</option>
+                <option value="512">512 × 341</option>
+                <option value="256">256 × 170</option>
+                <option value="128">128 × 85</option>
+                <option value="64">64 × 42</option>
+            </select>
+            <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
+            <button class="btn btn-sm" onclick="clearMask()">
+                Clear Mask
+            </button>
+            <button class="btn btn-sm btn-primary" id="inpaintBtn" onclick="runInpainting()">
+                Inpaint
+            </button>
+            <button class="btn btn-sm" id="previewBtn" onclick="showCompareModal()" style="display: none;">
+                👁 Preview
+            </button>
+            <button class="btn btn-sm download-btn" id="downloadBtn" onclick="downloadResult()" style="display: none;">
+                ⬇ Download
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Area -->
+    <div class="main-area">
+        <div class="canvas-container">
+            <div class="canvas-wrapper">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+        </div>
+
+        <!-- Live Compare Hint -->
+        <div id="liveCompareHint" class="live-compare-hint"></div>
+
+        <div class="side-panel">
+            <div class="panel-section">
+                <div class="panel-title">Image Info</div>
+                <div class="info-item">
+                    <span class="info-label">Resolution</span>
+                    <span class="info-value" id="infoResolution">-</span>
                 </div>
-
-                <!-- Middle: Editor Panel -->
-                <div class="panel">
-                    <div class="panel-title">编辑</div>
-
-                    <div class="upload-section">
-                        <label class="upload-btn">
-                            <span>📁 上传图片</span>
-                            <input type="file" id="imageInput" accept="image/*">
-                        </label>
-                    </div>
-
-                    <div class="image-info" id="imageInfo" style="display: none;">
-                        <span>📐 图片尺寸: <span class="info-value" id="imageResolution">--</span></span>
-                    </div>
-
-                    <div class="empty-state" id="emptyState">
-                        <div class="empty-state-icon">🖼️</div>
-                        <div>请上传图片开始编辑</div>
-                    </div>
-
-                    <div class="canvas-container" id="canvasContainer">
-                        <canvas id="editorCanvas"></canvas>
-                        <div class="canvas-hint" id="canvasHint">拖拽鼠标绘制矩形</div>
-                    </div>
-
-                    <div class="drawing-controls" id="drawingControls">
-                        <div class="control-row">
-                            <span class="control-label">掩码来源</span>
-                            <div class="mode-buttons">
-                                <button class="mode-btn active" data-source="preset" id="presetMaskBtn" onclick="setMaskSource('preset')">
-                                    📋 预设掩码
-                                </button>
-                                <button class="mode-btn" data-source="custom" id="customMaskBtn" onclick="setMaskSource('custom')">
-                                    ✏️ 自行绘制
-                                </button>
-                            </div>
-                        </div>
-                        <div class="control-row" id="drawModeRow" style="display: none;">
-                            <span class="control-label">绘制模式</span>
-                            <div class="mode-buttons">
-                                <button class="mode-btn active" data-mode="rectangle" onclick="setDrawMode('rectangle')">
-                                    ▢ 矩形
-                                </button>
-                                <button class="mode-btn" data-mode="brush" onclick="setDrawMode('brush')">
-                                    ✏️ 涂抹
-                                </button>
-                            </div>
-                        </div>
-                        <div class="control-row" id="brushSizeRow" style="display: none;">
-                            <span class="control-label">笔刷大小</span>
-                            <div class="brush-size-control">
-                                <input type="range" id="brushSize" min="5" max="100" value="20">
-                                <span class="brush-size-value" id="brushSizeValue">20px</span>
-                            </div>
-                        </div>
-                        <div class="control-row" id="actionRow">
-                            <span class="control-label">操作</span>
-                            <div class="action-buttons">
-                                <button class="action-btn undo-btn" id="undoBtn" onclick="undoMask()">↶ 撤销</button>
-                                <button class="action-btn clear-btn" id="clearBtn" onclick="clearMask()">✕ 清除</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="process-btn" id="processBtn" onclick="processImage()" disabled>
-                        开始修复
-                    </button>
+                <div class="info-item">
+                    <span class="info-label">Mask Coverage</span>
+                    <span class="info-value" id="infoCoverage">0%</span>
                 </div>
-
-                <!-- Right: Result Panel -->
-                <div class="panel result-panel" id="resultPanel">
-                    <div class="panel-title">结果</div>
-
-                    <div class="result-grid">
-                        <div class="result-item">
-                            <h4>原图</h4>
-                            <img class="result-image" id="originalImage" alt="Original" onclick="openImageViewer('original')">
-                        </div>
-                        <div class="result-item">
-                            <h4>修复后</h4>
-                            <img class="result-image" id="resultImage" alt="Result" onclick="openImageViewer('result')">
-                        </div>
-                    </div>
-
-                    <div class="processing-time" id="processingTime" style="display: none;">
-                        <span class="info-item">⏱️ 处理耗时: <span class="time-value" id="timeValue">--</span></span>
-                        <span class="info-item">📐 输入: <span class="resolution-value" id="inputResolution">--</span></span>
-                        <span class="info-item">📐 输出: <span class="resolution-value" id="outputResolution">--</span></span>
-                    </div>
-
-                    <button class="download-btn" onclick="downloadResult()">下载结果</button>
+                <div class="info-item">
+                    <span class="info-label">Drawing Mode</span>
+                    <span class="info-value" id="infoMode">Brush</span>
                 </div>
             </div>
 
-            <!-- Loading overlay - outside result panel so it can show during processing -->
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p class="loading-status" id="loadingStatus">正在处理图片，请稍候...</p>
-                <p class="loading-detail" id="loadingDetail">准备中...</p>
+            <div class="panel-section">
+                <div class="panel-title">Performance</div>
+                <div class="info-item">
+                    <span class="info-label">Inference Time</span>
+                    <span class="info-value" id="infoTime">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Throughput</span>
+                    <span class="info-value" id="infoThroughput">-</span>
+                </div>
             </div>
+
+            <div class="panel-section">
+                <div class="panel-title">Instructions</div>
+                <p style="font-size: 13px; color: var(--secondaryLabel); line-height: 1.6;">
+                    <strong>Brush:</strong> Click & drag to paint mask<br>
+                    <strong>Rectangle:</strong> Click & drag to draw rectangle<br>
+                    <strong>Upload:</strong> Select "📁 Upload Image" to use your own<br>
+                    <strong>Space:</strong> Toggle hint visibility<br>
+                    <strong>Compare:</strong> After inpainting, ← → to toggle, ESC to close
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Image Viewer Modal -->
-    <div class="image-modal" id="imageModal" onclick="closeModal(event)">
-        <span class="modal-close" onclick="closeModal(event)">&times;</span>
-        <div class="modal-info" id="modalInfo"></div>
-        <div class="modal-content">
-            <div class="modal-image-container" id="modalImageContainer">
-                <img class="modal-image" id="modalImage" src="" alt="Full size">
-            </div>
+    <!-- Progress Overlay -->
+    <div class="progress-overlay" id="progressOverlay">
+        <div class="progress-card">
+            <div class="spinner"></div>
+            <div class="progress-text">Processing Image...</div>
+            <div class="progress-subtext" id="progressSubtext">Please wait</div>
         </div>
-        <div class="modal-controls" onclick="event.stopPropagation()">
-            <button class="modal-btn" onclick="zoomOut()">➖ 缩小</button>
-            <button class="modal-btn" onclick="resetZoom()">↺ 恢复</button>
-            <button class="modal-btn" onclick="zoomIn()">➕ 放大</button>
+    </div>
+
+    <!-- Compare Modal -->
+    <div class="compare-modal" id="compareModal">
+        <div class="compare-content">
+            <button class="close-btn" onclick="closeCompareModal()">×</button>
+            <div class="compare-hint">
+                ← → to toggle • ESC to close • Space to hide hints
+            </div>
+            <img id="compareImage" class="compare-image" alt="Compare">
+            <div class="compare-controls">
+                <span class="toolbar-label" id="compareLabel">Result</span>
+            </div>
         </div>
     </div>
 
     <script>
-        let imageFile = null;
-        let resultBlob = null;
-        let originalImageDataUrl = null;
-
-        // Canvas and drawing state
-        const canvas = document.getElementById('editorCanvas');
-        const ctx = canvas.getContext('2d');
-        let loadedImage = null;
+        // State
+        let canvas, ctx;
+        let originalImage = null;
+        let originalWidth = 0;
+        let originalHeight = 0;
         let maskCanvas = null;
         let maskCtx = null;
-        let presetMaskCanvas = null;  // Store preset mask
-        let maskSource = 'preset';  // 'preset' or 'custom'
-        let drawMode = 'rectangle';
+        let inpaintedImage = null;
+        let inpaintedWidth = 0;
+        let inpaintedHeight = 0;
+        let showingResult = true;
         let isDrawing = false;
+        let drawMode = 'brush';
+        let brushSize = 25;
         let startX, startY;
-        let brushSize = 20;
-        let maskHistory = [];
+        let lastX, lastY;
+        let rectPreviewCanvas = null;
+        let rectPreviewCtx = null;
+        let isMousePressed = false;
+        let compareMode = false;
+        let hintVisible = true;
 
         // Test images configuration
-        const testImages = [
-            { name: '文字去除', url: '/static/test/text_removal.jpg', mask: '/static/test/text_removal_mask.png' },
-            { name: '物体移除', url: '/static/test/object_removal.jpg', mask: '/static/test/object_removal_mask.png' },
-            { name: '划痕修复', url: '/static/test/scratch_repair.jpg', mask: '/static/test/scratch_repair_mask.png' },
-            { name: '人脸修复', url: '/static/test/face_restoration.jpg', mask: '/static/test/face_restoration_mask.png' },
-            { name: '水印移除', url: '/static/test/watermark.jpg', mask: '/static/test/watermark_mask.png' },
-            { name: '旧照片', url: '/static/test/old_photo.jpg', mask: '/static/test/old_photo_mask.png' }
-        ];
+        const testImages = {
+            '4096': { width: 4096, height: 2730, url: '/static/test-images/test_pattern_4096x2730.jpg' },
+            '2048': { width: 2048, height: 1365, url: '/static/test-images/test_pattern_2048x1365.jpg' },
+            '1024': { width: 1024, height: 682, url: '/static/test-images/test_pattern_1024x682.jpg' },
+            '512': { width: 512, height: 341, url: '/static/test-images/test_pattern_512x341.jpg' },
+            '256': { width: 256, height: 170, url: '/static/test-images/test_pattern_256x170.jpg' },
+            '128': { width: 128, height: 85, url: '/static/test-images/test_pattern_128x85.jpg' },
+            '64': { width: 64, height: 42, url: '/static/test-images/test_pattern_64x42.jpg' }
+        };
 
-        // Load test images on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTestImages();
-            initCanvas();
-        });
+        // Initialize
+        function init() {
+            canvas = document.getElementById('mainCanvas');
+            ctx = canvas.getContext('2d');
 
-        function loadTestImages() {
-            const list = document.getElementById('testList');
-            testImages.forEach(test => {
-                const item = document.createElement('div');
-                item.className = 'test-item';
-                item.innerHTML = `
-                    <img src="${test.url}" alt="${test.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2260%22%3E%3Crect fill=%22%23ddd%22 width=%2280%22 height=%2260%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3EN/A%3C/text%3E%3C/svg%3E'">
-                    <div class="test-item-label">${test.name}</div>
-                `;
-                item.onclick = () => loadTestImage(test);
-                list.appendChild(item);
-            });
+            // Create off-screen mask canvas
+            maskCanvas = document.createElement('canvas');
+            maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
+
+            // Create rectangle preview canvas
+            rectPreviewCanvas = document.createElement('canvas');
+            rectPreviewCtx = rectPreviewCanvas.getContext('2d');
+
+            // Load default image (largest)
+            loadTestImage('4096');
+
+            // Setup event listeners
+            setupCanvasEvents();
+
+            // Setup keyboard events
+            setupKeyboardEvents();
         }
 
-        async function loadTestImage(test) {
-            try {
-                const imgResponse = await fetch(test.url);
-                if (!imgResponse.ok) return;
-                const imgBlob = await imgResponse.blob();
-                imageFile = new File([imgBlob], 'test_image.jpg', { type: 'image/jpeg' });
+        function loadTestImage(sizeKey) {
+            const imgConfig = testImages[sizeKey];
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
 
-                // Load the mask to display on canvas
-                const maskResponse = await fetch(test.mask);
-                if (maskResponse.ok) {
-                    const maskBlob = await maskResponse.blob();
-                    const maskImg = await createImageFromBlob(maskBlob);
-                    loadImageToCanvas(imgBlob, maskImg);
-                } else {
-                    loadImageToCanvas(imgBlob, null);
-                }
-            } catch (e) {
-                console.log('Test image not available:', test.url);
-            }
+            img.onload = () => {
+                originalImage = img;
+                originalWidth = imgConfig.width;
+                originalHeight = imgConfig.height;
+
+                // Set canvas size to image size
+                canvas.width = imgConfig.width;
+                canvas.height = imgConfig.height;
+                maskCanvas.width = imgConfig.width;
+                maskCanvas.height = imgConfig.height;
+                rectPreviewCanvas.width = imgConfig.width;
+                rectPreviewCanvas.height = imgConfig.height;
+
+                // Reset inpainted image
+                inpaintedImage = null;
+                inpaintedWidth = 0;
+                inpaintedHeight = 0;
+
+                // Draw original image
+                ctx.drawImage(img, 0, 0);
+
+                // Clear mask
+                maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+                // Update info
+                document.getElementById('infoResolution').textContent = `${imgConfig.width} × ${imgConfig.height}`;
+                updateCoverage();
+            };
+
+            img.src = imgConfig.url;
         }
 
-        function createImageFromBlob(blob) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
-                img.src = URL.createObjectURL(blob);
-            });
-        }
-
-        function initCanvas() {
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseleave', stopDrawing);
+        function setupCanvasEvents() {
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', handleMouseMove);
+            canvas.addEventListener('mouseup', endDraw);
+            canvas.addEventListener('mouseleave', endDraw);
 
             // Touch support
-            canvas.addEventListener('touchstart', handleTouchStart);
-            canvas.addEventListener('touchmove', handleTouchMove);
-            canvas.addEventListener('touchend', stopDrawing);
-
-            // Brush size slider
-            document.getElementById('brushSize').addEventListener('input', (e) => {
-                brushSize = parseInt(e.target.value);
-                document.getElementById('brushSizeValue').textContent = brushSize + 'px';
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                startDraw({
+                    offsetX: (touch.clientX - rect.left) * scaleX,
+                    offsetY: (touch.clientY - rect.top) * scaleY
+                });
             });
+
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                handleMouseMove({
+                    offsetX: (touch.clientX - rect.left) * scaleX,
+                    offsetY: (touch.clientY - rect.top) * scaleY
+                });
+            });
+
+            canvas.addEventListener('touchend', endDraw);
         }
 
-        function handleTouchStart(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            startDrawing({
-                offsetX: (touch.clientX - rect.left) * scaleX,
-                offsetY: (touch.clientY - rect.top) * scaleY
-            });
+        function handleMouseMove(e) {
+            if (!isDrawing) return;
+
+            // Simply draw - no live preview toggle on main canvas
+            // Live preview toggle only works in compare modal
+            draw(e);
         }
 
-        function handleTouchMove(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            draw({
-                offsetX: (touch.clientX - rect.left) * scaleX,
-                offsetY: (touch.clientY - rect.top) * scaleY
-            });
-        }
-
-        // Image upload handling
-        document.getElementById('imageInput').addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                imageFile = e.target.files[0];
-                loadImageToCanvas(imageFile, null);
-            }
-        });
-
-        function loadImageToCanvas(imageBlob, maskImg) {
-            const img = new Image();
-            img.onload = () => {
-                loadedImage = img;
-
-                // Set canvas size to match image
-                // Internal resolution matches original image for full-quality processing
-                // Display size is scaled down to fit UI while maintaining aspect ratio
-                const maxWidth = 600;
-                const maxHeight = 550;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > maxWidth) {
-                    height = (maxWidth / width) * height;
-                    width = maxWidth;
-                }
-                if (height > maxHeight) {
-                    width = (maxHeight / height) * width;
-                    height = maxHeight;
+        function setupKeyboardEvents() {
+            document.addEventListener('keydown', (e) => {
+                // Space bar to toggle hint visibility
+                if (e.code === 'Space' && !document.getElementById('compareModal').classList.contains('active')) {
+                    e.preventDefault();
+                    toggleHintVisibility();
+                    return;
                 }
 
-                canvas.width = img.width;
-                canvas.height = img.height;
-                canvas.style.width = width + 'px';
-                canvas.style.height = height + 'px';
+                // Compare modal navigation
+                if (document.getElementById('compareModal').classList.contains('active')) {
+                    if (e.key === 'ArrowLeft') {
+                        showOriginal();
+                    } else if (e.key === 'ArrowRight') {
+                        showResult();
+                    } else if (e.key === 'Escape') {
+                        closeCompareModal();
+                    }
+                }
+            });
+        }
 
-                // Create mask canvas for custom drawing
-                maskCanvas = document.createElement('canvas');
-                maskCanvas.width = img.width;
-                maskCanvas.height = img.height;
-                maskCtx = maskCanvas.getContext('2d');
-                maskCtx.fillStyle = 'black';
-                maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-
-                // Store preset mask if provided
-                if (maskImg) {
-                    presetMaskCanvas = document.createElement('canvas');
-                    presetMaskCanvas.width = img.width;
-                    presetMaskCanvas.height = img.height;
-                    const presetCtx = presetMaskCanvas.getContext('2d');
-                    presetCtx.drawImage(maskImg, 0, 0);
-                    maskSource = 'preset';
-                    updateMaskSourceUI();
+        function toggleHintVisibility() {
+            hintVisible = !hintVisible;
+            const hint = document.getElementById('liveCompareHint');
+            if (hint) {
+                if (hintVisible) {
+                    hint.classList.remove('hidden');
                 } else {
-                    presetMaskCanvas = null;
-                    maskSource = 'custom';
-                    updateMaskSourceUI();
-                }
-
-                maskHistory = [];
-                renderCanvas();
-
-                // Show editor
-                document.getElementById('emptyState').style.display = 'none';
-                document.getElementById('canvasContainer').classList.add('show');
-                document.getElementById('drawingControls').classList.add('show');
-                document.getElementById('processBtn').disabled = false;
-
-                // Show image resolution
-                document.getElementById('imageResolution').textContent = `${img.width} x ${img.height} px`;
-                document.getElementById('imageInfo').style.display = 'flex';
-
-                // Store original for display
-                originalImageDataUrl = URL.createObjectURL(imageBlob);
-            };
-            img.src = URL.createObjectURL(imageBlob);
-        }
-
-        function setMaskSource(source) {
-            maskSource = source;
-            updateMaskSourceUI();
-
-            if (source === 'custom') {
-                // Start with blank mask for custom drawing
-                maskHistory = [];
-                maskCtx.fillStyle = 'black';
-                maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-            }
-
-            renderCanvas();
-        }
-
-        function updateMaskSourceUI() {
-            const presetBtn = document.getElementById('presetMaskBtn');
-            const customBtn = document.getElementById('customMaskBtn');
-            const drawModeRow = document.getElementById('drawModeRow');
-            const brushSizeRow = document.getElementById('brushSizeRow');
-            const actionRow = document.getElementById('actionRow');
-            const hint = document.getElementById('canvasHint');
-
-            if (maskSource === 'preset' && presetMaskCanvas) {
-                presetBtn.classList.add('active');
-                customBtn.classList.remove('active');
-                drawModeRow.style.display = 'none';
-                brushSizeRow.style.display = 'none';
-                actionRow.style.display = 'none';
-                hint.textContent = '使用预设掩码';
-            } else {
-                presetBtn.classList.remove('active');
-                customBtn.classList.add('active');
-                drawModeRow.style.display = 'flex';
-                actionRow.style.display = 'flex';
-                hint.textContent = drawMode === 'rectangle' ? '拖拽鼠标绘制矩形' : '按住鼠标涂抹区域';
-            }
-        }
-
-        function renderCanvas() {
-            // Draw image
-            ctx.drawImage(loadedImage, 0, 0);
-
-            // Get the active mask
-            let activeMask;
-            if (maskSource === 'preset' && presetMaskCanvas) {
-                activeMask = presetMaskCanvas.getContext('2d');
-            } else {
-                activeMask = maskCtx;
-            }
-
-            // Draw semi-transparent white overlay on masked areas
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const maskData = activeMask.getImageData(0, 0, canvas.width, canvas.height);
-
-            for (let i = 0; i < imageData.data.length; i += 4) {
-                // Check if this pixel is masked (white in mask)
-                if (maskData.data[i] > 128) {
-                    // Apply semi-transparent white overlay
-                    imageData.data[i] = Math.min(255, imageData.data[i] + 100);     // R
-                    imageData.data[i + 1] = Math.min(255, imageData.data[i + 1] + 50); // G
-                    imageData.data[i + 2] = Math.min(255, imageData.data[i + 2] + 50); // B
+                    hint.classList.add('hidden');
                 }
             }
-
-            ctx.putImageData(imageData, 0, 0);
         }
 
-        function setDrawMode(mode) {
+        function setMode(mode) {
             drawMode = mode;
 
-            // Update button states (only for draw mode buttons)
-            document.querySelectorAll('[data-mode]').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.mode === mode);
-            });
+            // Update UI
+            document.getElementById('brushMode').classList.toggle('active', mode === 'brush');
+            document.getElementById('rectMode').classList.toggle('active', mode === 'rect');
+            document.getElementById('brushSettings').style.display = mode === 'brush' ? 'flex' : 'none';
+            document.getElementById('infoMode').textContent = mode === 'brush' ? 'Brush' : 'Rectangle';
 
-            // Show/hide brush size control
-            document.getElementById('brushSizeRow').style.display =
-                mode === 'brush' ? 'flex' : 'none';
-
-            // Update hint
-            const hint = mode === 'rectangle' ? '拖拽鼠标绘制矩形' : '按住鼠标涂抹区域';
-            document.getElementById('canvasHint').textContent = hint;
+            // Update cursor
+            canvas.className = mode === 'brush' ? 'drawing' : 'rect-mode';
         }
 
-        function undoMask() {
-            if (maskSource !== 'custom') return;
-            if (maskHistory.length > 0) {
-                const prevState = maskHistory.pop();
-                maskCtx.putImageData(prevState, 0, 0);
-                renderCanvas();
-            }
-        }
-
-        function clearMask() {
-            if (maskSource !== 'custom') return;
-            saveMaskHistory();
-            maskCtx.fillStyle = 'black';
-            maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-            renderCanvas();
+        function updateBrushSize(size) {
+            brushSize = parseInt(size);
+            document.getElementById('brushSizeLabel').textContent = `${size}px`;
         }
 
         function getCanvasCoords(e) {
+            // Get the actual display size vs canvas size
             const rect = canvas.getBoundingClientRect();
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
+
             return {
-                x: (e.offsetX || 0) * scaleX,
-                y: (e.offsetY || 0) * scaleY
+                x: e.offsetX * scaleX,
+                y: e.offsetY * scaleY
             };
         }
 
-        function startDrawing(e) {
-            if (!loadedImage || maskSource !== 'custom') return;
+        function startDraw(e) {
+            if (!originalImage) return;
+
             isDrawing = true;
+            isMousePressed = true;
             const coords = getCanvasCoords(e);
             startX = coords.x;
             startY = coords.y;
+            lastX = coords.x;
+            lastY = coords.y;
+
+            // Show live compare hint if we have inpainted result
+            if (inpaintedImage) {
+                const hint = document.getElementById('liveCompareHint');
+                if (hint) {
+                    hint.classList.add('visible');
+                    hint.textContent = showingResult ? '→ Result (move left for Original)' : '← Original (move right for Result)';
+                }
+            }
 
             if (drawMode === 'brush') {
-                saveMaskHistory();
-                maskCtx.fillStyle = 'white';
-                maskCtx.beginPath();
-                maskCtx.arc(startX, startY, brushSize / 2, 0, Math.PI * 2);
-                maskCtx.fill();
-                renderCanvas();
+                // Draw single dot
+                drawBrush(coords.x, coords.y);
             }
+        }
+
+        function endDraw(e) {
+            if (!isDrawing) return;
+
+            // Hide live compare hint
+            const hint = document.getElementById('liveCompareHint');
+            if (hint) {
+                hint.classList.remove('visible');
+            }
+
+            if (drawMode === 'rect' && e.offsetX !== undefined) {
+                const coords = getCanvasCoords(e);
+                drawRect(startX, startY, coords.x, coords.y);
+            }
+
+            isDrawing = false;
+            isMousePressed = false;
+            updateCoverage();
         }
 
         function draw(e) {
@@ -1139,367 +981,395 @@
 
             const coords = getCanvasCoords(e);
 
-            if (drawMode === 'rectangle') {
-                renderCanvas();
-                // Preview rectangle with better visibility
-                const rectX = Math.min(startX, coords.x);
-                const rectY = Math.min(startY, coords.y);
-                const rectW = Math.abs(coords.x - startX);
-                const rectH = Math.abs(coords.y - startY);
-
-                // Draw semi-transparent white fill to show masked area
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.fillRect(rectX, rectY, rectW, rectH);
-
-                // Draw border with thicker line
-                ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
-                ctx.lineWidth = Math.max(3, canvas.width / 500); // Scale line width with image size
-                ctx.setLineDash([]);
-                ctx.strokeRect(rectX, rectY, rectW, rectH);
-
-                // Draw contrast border
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-                ctx.lineWidth = Math.max(2, canvas.width / 700);
-                ctx.strokeRect(rectX - 1, rectY - 1, rectW + 2, rectH + 2);
-            } else if (drawMode === 'brush') {
-                maskCtx.fillStyle = 'white';
-                maskCtx.beginPath();
-                maskCtx.arc(coords.x, coords.y, brushSize / 2, 0, Math.PI * 2);
-                maskCtx.fill();
-                renderCanvas();
+            if (drawMode === 'brush') {
+                drawBrush(coords.x, coords.y);
+                // Update canvas display to show the new brush stroke
+                redrawCanvas();
+            } else if (drawMode === 'rect') {
+                drawRectPreview(coords.x, coords.y);
             }
+
+            lastX = coords.x;
+            lastY = coords.y;
         }
 
-        function stopDrawing(e) {
+        function endDraw(e) {
             if (!isDrawing) return;
 
-            if (drawMode === 'rectangle' && e.offsetX !== undefined) {
+            if (drawMode === 'rect' && e.offsetX !== undefined) {
                 const coords = getCanvasCoords(e);
-                saveMaskHistory();
-
-                // Draw rectangle on mask
-                const x = Math.min(startX, coords.x);
-                const y = Math.min(startY, coords.y);
-                const w = Math.abs(coords.x - startX);
-                const h = Math.abs(coords.y - startY);
-
-                maskCtx.fillStyle = 'white';
-                maskCtx.fillRect(x, y, w, h);
-                renderCanvas();
+                drawRect(startX, startY, coords.x, coords.y);
             }
 
             isDrawing = false;
+            updateCoverage();
         }
 
-        function saveMaskHistory() {
-            if (maskHistory.length > 10) {
-                maskHistory.shift();
-            }
-            maskHistory.push(maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height));
+        function drawBrush(x, y) {
+            // Draw on mask canvas
+            maskCtx.fillStyle = 'white';
+            maskCtx.beginPath();
+            maskCtx.arc(x, y, brushSize, 0, Math.PI * 2);
+            maskCtx.fill();
         }
 
-        // Process image
-        async function processImage() {
-            const errorMessage = document.getElementById('errorMessage');
-            const loading = document.getElementById('loading');
-            const resultPanel = document.getElementById('resultPanel');
-            const processBtn = document.getElementById('processBtn');
-
-            errorMessage.classList.remove('show');
-
-            if (!imageFile || !maskCanvas) {
-                showError('请先上传图片并绘制掩码区域');
-                return;
-            }
-
-            // Get the active mask canvas
-            let activeMaskCanvas;
-            if (maskSource === 'preset' && presetMaskCanvas) {
-                activeMaskCanvas = presetMaskCanvas;
+        function drawRectPreview(currentX, currentY) {
+            // Redraw canvas with current state
+            if (showingResult && inpaintedImage) {
+                ctx.drawImage(inpaintedImage, 0, 0, canvas.width, canvas.height);
             } else {
-                activeMaskCanvas = maskCanvas;
+                ctx.drawImage(originalImage, 0, 0);
             }
 
-            // Check if mask has any white pixels
-            const activeMaskCtx = activeMaskCanvas.getContext('2d');
-            const maskData = activeMaskCtx.getImageData(0, 0, activeMaskCanvas.width, activeMaskCanvas.height);
-            const hasMask = maskData.data.some((v, i) => i % 4 === 0 && v > 128);
+            // Draw rectangle preview
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(startX, startY, currentX - startX, currentY - startY);
+            ctx.setLineDash([]);
 
-            if (!hasMask) {
-                showError('请先在图片上绘制需要修复的区域');
+            // Fill with semi-transparent red
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.fillRect(startX, startY, currentX - startX, currentY - startY);
+
+            // Draw existing mask overlay
+            ctx.globalAlpha = 0.5;
+            ctx.drawImage(maskCanvas, 0, 0);
+            ctx.globalAlpha = 1.0;
+        }
+
+        function drawRect(x1, y1, x2, y2) {
+            // Normalize rectangle coordinates
+            const minX = Math.min(x1, x2);
+            const minY = Math.min(y1, y2);
+            const width = Math.abs(x2 - x1);
+            const height = Math.abs(y2 - y1);
+
+            // Draw on mask canvas
+            maskCtx.fillStyle = 'white';
+            maskCtx.fillRect(minX, minY, width, height);
+
+            // Redraw canvas
+            redrawCanvas();
+        }
+
+        function drawMaskOverlay() {
+            // This function is called to update the visual overlay
+            redrawCanvas();
+        }
+
+        function redrawCanvas() {
+            // Clear and redraw
+            // Always draw original image + mask overlay on main canvas (edit mode)
+            // The showingResult/inpaintedImage state should NOT affect the main canvas
+
+            // Draw original image
+            ctx.drawImage(originalImage, 0, 0);
+
+            // Draw mask overlay on top
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Create red tint for mask
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = maskCanvas.width;
+            tempCanvas.height = maskCanvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Copy mask to temp canvas
+            tempCtx.drawImage(maskCanvas, 0, 0);
+
+            // Convert white pixels to red
+            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] > 128) {  // White pixel
+                    data[i] = 255;     // R = max
+                    data[i + 1] = 0;   // G = 0
+                    data[i + 2] = 0;   // B = 0
+                    data[i + 3] = 200; // A = 200 (semi-transparent)
+                } else {
+                    data[i + 3] = 0;   // Transparent
+                }
+            }
+            tempCtx.putImageData(imageData, 0, 0);
+
+            // Draw the red overlay
+            ctx.drawImage(tempCanvas, 0, 0);
+            ctx.restore();
+        }
+
+        function clearMask() {
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+            redrawCanvas();
+            updateCoverage();
+        }
+
+        function updateCoverage() {
+            const imageData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+            const data = imageData.data;
+            let whitePixels = 0;
+
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] > 128) whitePixels++;
+            }
+
+            const coverage = ((whitePixels / (data.length / 4)) * 100).toFixed(1);
+            document.getElementById('infoCoverage').textContent = `${coverage}%`;
+        }
+
+        // Inpainting
+        async function runInpainting() {
+            if (!originalImage) {
+                alert('Please select an image first');
                 return;
             }
 
-            loading.classList.add('show');
-            processBtn.disabled = true;
+            // Hide hint before starting
+            const hint = document.getElementById('liveCompareHint');
+            if (hint) hint.classList.remove('visible');
 
-            // Reset loading status and clear previous processing info
-            updateLoadingStatus('准备中...', '正在准备上传数据');
-            const timeContainer = document.getElementById('processingTime');
-            // Remove any previously added inference time elements
-            const oldInference = timeContainer.querySelector('.info-item:last-child');
-            if (oldInference && oldInference.textContent.includes('算法推理')) {
-                timeContainer.removeChild(oldInference);
-            }
+            const overlay = document.getElementById('progressOverlay');
+            const subtext = document.getElementById('progressSubtext');
+            overlay.classList.add('active');
 
             try {
-                // Convert mask canvas to blob
-                updateLoadingStatus('生成掩码...', '正在将掩码转换为图片');
-                const maskBlob = await new Promise(resolve => {
-                    activeMaskCanvas.toBlob(resolve, 'image/png');
+                // Get original image as blob (WITHOUT mask overlay)
+                const originalCanvas = document.createElement('canvas');
+                originalCanvas.width = originalImage.width;
+                originalCanvas.height = originalImage.height;
+                const originalCtx = originalCanvas.getContext('2d');
+                originalCtx.drawImage(originalImage, 0, 0);
+
+                const imageBlob = await new Promise(resolve => {
+                    originalCanvas.toBlob(resolve, 'image/jpeg', 0.95);
                 });
 
+                // Create mask with black background (LaMa format: white = inpaint area)
+                const maskOutputCanvas = document.createElement('canvas');
+                maskOutputCanvas.width = maskCanvas.width;
+                maskOutputCanvas.height = maskCanvas.height;
+                const maskOutputCtx = maskOutputCanvas.getContext('2d');
+
+                // Fill black background
+                maskOutputCtx.fillStyle = 'black';
+                maskOutputCtx.fillRect(0, 0, maskOutputCanvas.width, maskOutputCanvas.height);
+
+                // Draw white mask (LaMa uses white for areas to inpaint)
+                maskOutputCtx.drawImage(maskCanvas, 0, 0);
+
+                const maskBlob = await new Promise(resolve => {
+                    maskOutputCanvas.toBlob(resolve, 'image/png');
+                });
+
+                // Create form data
                 const formData = new FormData();
-                formData.append('image', imageFile);
-                formData.append('mask', new File([maskBlob], 'mask.png', { type: 'image/png' }));
+                formData.append('image', imageBlob, 'image.jpg');
+                formData.append('mask', maskBlob, 'mask.png');
 
-                // Create abort controller for timeout (10 minutes for large images)
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 600000);
-
-                // Give UI a chance to update before the fetch blocks
-                await new Promise(resolve => setTimeout(resolve, 50));
-                updateLoadingStatus('服务器处理中...', '上传完成，正在执行LaMa推理（可能需要较长时间）');
+                subtext.textContent = 'Sending request...';
 
                 const response = await fetch('/inpaint', {
                     method: 'POST',
-                    body: formData,
-                    signal: controller.signal
+                    body: formData
                 });
 
-                clearTimeout(timeoutId);
-
                 if (!response.ok) {
-                    throw new Error('处理失败，请稍后重试');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                // Set status to show we're receiving the result
-                updateLoadingStatus('接收结果...', '正在下载处理后的图片');
+                subtext.textContent = 'Processing result...';
 
-                // Get processing info from headers
                 const processingTime = response.headers.get('X-Processing-Time');
                 const inferenceTime = response.headers.get('X-Inference-Time');
-                const inputRes = response.headers.get('X-Input-Resolution');
-                const outputRes = response.headers.get('X-Output-Resolution');
+                const inputResolution = response.headers.get('X-Input-Resolution');
 
-                resultBlob = await response.blob();
-                const resultUrl = URL.createObjectURL(resultBlob);
+                document.getElementById('infoTime').textContent = inferenceTime || processingTime || '-';
 
-                // Set up images
-                document.getElementById('originalImage').src = originalImageDataUrl;
-                document.getElementById('resultImage').src = resultUrl;
-
-                // Show processing info with separate inference time
-                const timeContainer = document.getElementById('processingTime');
-                const timeElement = document.getElementById('timeValue');
-                const inputResElement = document.getElementById('inputResolution');
-                const outputResElement = document.getElementById('outputResolution');
-
-                if (processingTime) {
-                    timeElement.textContent = processingTime + ' 秒';
+                if (inferenceTime && inputResolution) {
+                    const [w, h] = inputResolution.split('x').map(Number);
+                    const throughput = Math.round((w * h) / parseFloat(inferenceTime));
+                    document.getElementById('infoThroughput').textContent = `${(throughput / 1000000).toFixed(2)} MP/s`;
                 }
-                if (inferenceTime) {
-                    // Add inference time as a new item
-                    const inferenceInfo = document.createElement('span');
-                    inferenceInfo.className = 'info-item';
-                    inferenceInfo.innerHTML = `🧠 算法推理: <span class="resolution-value">${inferenceTime} 秒</span>`;
-                    timeContainer.appendChild(inferenceInfo);
-                }
-                if (inputRes) {
-                    inputResElement.textContent = inputRes + ' px';
-                }
-                if (outputRes) {
-                    outputResElement.textContent = outputRes + ' px';
-                }
-                timeContainer.style.display = 'block';
 
-                resultPanel.classList.add('show');
+                const blob = await response.blob();
+                inpaintedImage = await createImageBitmap(blob);
+                inpaintedWidth = inpaintedImage.width;
+                inpaintedHeight = inpaintedImage.height;
+
+                console.log(`Inpainted image size: ${inpaintedWidth}x${inpaintedHeight}, Original: ${originalWidth}x${originalHeight}`);
+
+                // Show preview and download buttons (don't auto-open modal)
+                document.getElementById('downloadBtn').style.display = 'inline-flex';
+                document.getElementById('previewBtn').style.display = 'inline-flex';
+
+                // Optionally auto-open modal for convenience
+                showCompareModal();
 
             } catch (error) {
-                if (error.name === 'AbortError') {
-                    showError('处理超时: 图片太大，处理时间过长。请尝试缩小图片或使用较小的掩码区域。');
-                } else {
-                    showError('处理失败: ' + error.message);
-                }
+                console.error('Error:', error);
+                alert('Failed to process image: ' + error.message);
             } finally {
-                loading.classList.remove('show');
-                processBtn.disabled = false;
+                overlay.classList.remove('active');
             }
         }
 
-        function showError(message) {
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.textContent = message;
-            errorMessage.classList.add('show');
+        function showCompareModal() {
+            if (!inpaintedImage) {
+                alert('No inpainting result to preview. Please run inpainting first.');
+                return;
+            }
+
+            const modal = document.getElementById('compareModal');
+            const img = document.getElementById('compareImage');
+
+            // Show result by default (scaled to original dimensions)
+            // CLEAN result - no mask overlay
+            img.src = canvasToDataURL(inpaintedImage, originalWidth, originalHeight);
+            showingResult = true;
+            document.getElementById('compareLabel').textContent = 'Result →';
+
+            // Show download and preview buttons
+            document.getElementById('downloadBtn').style.display = 'inline-flex';
+            document.getElementById('previewBtn').style.display = 'inline-flex';
+
+            modal.classList.add('active');
         }
 
-        function updateLoadingStatus(status, detail) {
-            const statusEl = document.getElementById('loadingStatus');
-            const detailEl = document.getElementById('loadingDetail');
-            if (statusEl) statusEl.textContent = status;
-            if (detailEl) detailEl.textContent = detail;
+        function closeCompareModal() {
+            const modal = document.getElementById('compareModal');
+            modal.classList.remove('active');
+
+            // Reset to showing original with mask when returning to edit mode
+            showingResult = false;
+
+            // Redraw canvas with original image and mask overlay
+            redrawCanvas();
         }
 
+        function showOriginal() {
+            const img = document.getElementById('compareImage');
+            // Show original image CLEAN - no mask overlay
+            img.src = canvasToDataURL(originalImage, originalWidth, originalHeight);
+            showingResult = false;
+            document.getElementById('compareLabel').textContent = '← Original';
+        }
+
+        function showResult() {
+            const img = document.getElementById('compareImage');
+            // Show result CLEAN - no mask overlay
+            img.src = canvasToDataURL(inpaintedImage, originalWidth, originalHeight);
+            showingResult = true;
+            document.getElementById('compareLabel').textContent = 'Result →';
+        }
+
+        function canvasToDataURL(source, targetWidth, targetHeight) {
+            const tempCanvas = document.createElement('canvas');
+
+            // Use target dimensions if provided, otherwise use source dimensions
+            if (targetWidth && targetHeight) {
+                tempCanvas.width = targetWidth;
+                tempCanvas.height = targetHeight;
+            } else {
+                tempCanvas.width = source.width || canvas.width;
+                tempCanvas.height = source.height || canvas.height;
+            }
+
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Draw the image CLEAN - no mask overlay for preview
+            if (source.width !== tempCanvas.width || source.height !== tempCanvas.height) {
+                tempCtx.drawImage(source, 0, 0, tempCanvas.width, tempCanvas.height);
+            } else {
+                tempCtx.drawImage(source, 0, 0);
+            }
+
+            // NO MASK OVERLAY in preview - pure clean image only
+            return tempCanvas.toDataURL('image/jpeg', 0.95);
+        }
+
+        // File upload handler
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    originalImage = img;
+                    originalWidth = img.width;
+                    originalHeight = img.height;
+
+                    // Set canvas size
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    maskCanvas.width = img.width;
+                    maskCanvas.height = img.height;
+                    rectPreviewCanvas.width = img.width;
+                    rectPreviewCanvas.height = img.height;
+
+                    // Reset inpainted image
+                    inpaintedImage = null;
+                    inpaintedWidth = 0;
+                    inpaintedHeight = 0;
+
+                    // Hide download button
+                    document.getElementById('downloadBtn').style.display = 'none';
+
+                    // Draw image
+                    ctx.drawImage(img, 0, 0);
+
+                    // Clear mask
+                    maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+                    // Update info
+                    document.getElementById('infoResolution').textContent = `${img.width} × ${img.height}`;
+                    updateCoverage();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Download result handler
         function downloadResult() {
-            if (!resultBlob) return;
-            const url = URL.createObjectURL(resultBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'lama_result_' + Date.now() + '.png';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        // Image Viewer Modal
-        let modalZoom = 1;
-        let modalPanX = 0;
-        let modalPanY = 0;
-        let isDraggingModal = false;
-        let modalDragStartX = 0;
-        let modalDragStartY = 0;
-
-        function openImageViewer(type) {
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            const modalInfo = document.getElementById('modalInfo');
-
-            const imgId = type === 'original' ? 'originalImage' : 'resultImage';
-            const src = document.getElementById(imgId).src;
-
-            if (!src || src === '') return;
-
-            modalImg.src = src;
-
-            // Get image dimensions
-            const img = new Image();
-            img.onload = () => {
-                modalInfo.textContent = `${img.naturalWidth} x ${img.naturalHeight} px`;
-            };
-            img.src = src;
-
-            // Reset zoom and pan
-            modalZoom = 1;
-            modalPanX = 0;
-            modalPanY = 0;
-            updateModalTransform();
-
-            modal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-
-            // Set up pan events
-            setupModalPan();
-        }
-
-        function closeModal(event) {
-            if (event && event.target.classList.contains('modal-btn')) return;
-            const modal = document.getElementById('imageModal');
-            modal.classList.remove('show');
-            document.body.style.overflow = '';
-        }
-
-        function setupModalPan() {
-            const container = document.getElementById('modalImageContainer');
-            const img = document.getElementById('modalImage');
-
-            container.onmousedown = (e) => {
-                if (modalZoom > 1) {
-                    isDraggingModal = true;
-                    modalDragStartX = e.clientX - modalPanX;
-                    modalDragStartY = e.clientY - modalPanY;
-                    container.classList.add('dragging');
-                }
-            };
-
-            document.onmousemove = (e) => {
-                if (isDraggingModal) {
-                    e.preventDefault();
-                    modalPanX = e.clientX - modalDragStartX;
-                    modalPanY = e.clientY - modalDragStartY;
-                    updateModalTransform();
-                }
-            };
-
-            document.onmouseup = () => {
-                isDraggingModal = false;
-                container.classList.remove('dragging');
-            };
-
-            // Touch support
-            container.ontouchstart = (e) => {
-                if (modalZoom > 1 && e.touches.length === 1) {
-                    isDraggingModal = true;
-                    modalDragStartX = e.touches[0].clientX - modalPanX;
-                    modalDragStartY = e.touches[0].clientY - modalPanY;
-                }
-            };
-
-            container.ontouchmove = (e) => {
-                if (isDraggingModal && e.touches.length === 1) {
-                    e.preventDefault();
-                    modalPanX = e.touches[0].clientX - modalDragStartX;
-                    modalPanY = e.touches[0].clientY - modalDragStartY;
-                    updateModalTransform();
-                }
-            };
-
-            container.ontouchend = () => {
-                isDraggingModal = false;
-            };
-
-            // Mouse wheel zoom
-            container.onwheel = (e) => {
-                e.preventDefault();
-                if (e.deltaY < 0) {
-                    zoomIn();
-                } else {
-                    zoomOut();
-                }
-            };
-        }
-
-        function updateModalTransform() {
-            const img = document.getElementById('modalImage');
-            img.style.transform = `translate(${modalPanX}px, ${modalPanY}px) scale(${modalZoom})`;
-        }
-
-        function zoomIn() {
-            modalZoom = Math.min(modalZoom * 1.25, 10);
-            updateModalTransform();
-        }
-
-        function zoomOut() {
-            modalZoom = Math.max(modalZoom / 1.25, 0.5);
-            if (modalZoom === 1) {
-                modalPanX = 0;
-                modalPanY = 0;
+            if (!inpaintedImage) {
+                alert('No result to download. Please run inpainting first.');
+                return;
             }
-            updateModalTransform();
+
+            // Create canvas with original dimensions
+            const downloadCanvas = document.createElement('canvas');
+            downloadCanvas.width = originalWidth;
+            downloadCanvas.height = originalHeight;
+            const downloadCtx = downloadCanvas.getContext('2d');
+
+            // Draw inpainted image (scaled if needed)
+            downloadCtx.drawImage(inpaintedImage, 0, 0, originalWidth, originalHeight);
+
+            // Download
+            const link = document.createElement('a');
+            link.download = `lama_inpaint_${Date.now()}.jpg`;
+            link.href = downloadCanvas.toDataURL('image/jpeg', 0.95);
+            link.click();
         }
 
-        function resetZoom() {
-            modalZoom = 1;
-            modalPanX = 0;
-            modalPanY = 0;
-            updateModalTransform();
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            const modal = document.getElementById('imageModal');
-            if (!modal.classList.contains('show')) return;
-
-            if (e.key === 'Escape') {
-                closeModal();
-            } else if (e.key === '+' || e.key === '=') {
-                zoomIn();
-            } else if (e.key === '-' || e.key === '_') {
-                zoomOut();
-            } else if (e.key === '0') {
-                resetZoom();
+        // Handle test image select (trigger upload when upload option selected)
+        const testImageSelect = document.getElementById('testImageSelect');
+        testImageSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'upload') {
+                document.getElementById('imageUpload').click();
+                // Reset to previous value after triggering upload
+                e.target.value = '4096';
+            } else {
+                loadTestImage(e.target.value);
             }
         });
+
+        // Initialize on load
+        window.onload = init;
     </script>
 </body>
 </html>

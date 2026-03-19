@@ -32,7 +32,7 @@ pip3 install -r requirements-service.txt
 git clone https://github.com/cpluser09/lama-practice.git
 cd lama-practice
 docker-compose up -d --build
-# Service: http://localhost:5000
+# Service: http://localhost:5001
 ```
 
 ---
@@ -44,7 +44,7 @@ docker-compose up -d --build
 | **Hardware** | Apple Silicon (M1/M2/M3/M4) | Any x86_64 / ARM |
 | **Acceleration** | Metal GPU | CPU only |
 | **Runtime** | Native Python | Docker container |
-| **Port** | 5002 | 5000 |
+| **Port** | 5002 | 5001 |
 | **Speed (512x384)** | ~2s | ~7s |
 | **Speed (1500x2000)** | ~25s | ~111s |
 | **Speedup** | 3.5-4x faster than CPU | 1x (baseline) |
@@ -142,7 +142,7 @@ docker-compose up -d --build
 ### Verify Service
 
 ```bash
-curl http://localhost:5000/health
+curl http://localhost:5001/health
 ```
 
 Expected response:

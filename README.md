@@ -1,243 +1,211 @@
-# LaMa Image Inpainting Service
+# LaMa 图像修复服务 / LaMa Image Inpainting Service
 
 基于 LaMa (Resolution-robust Large Mask Inpainting with Fourier Convolutions) 的图像修复 Web 服务。
 
-## Quick Start
+Image inpainting web service based on LaMa (Resolution-robust Large Mask Inpainting with Fourier Convolutions).
 
-### 本地快速启动
+## 快速开始 / Quick Start
+
+### macOS Apple Silicon (GPU 加速 / GPU Accelerated)
 
 ```bash
-# 克隆项目
 git clone --recurse-submodules https://github.com/cpluser09/lama-practice.git
 cd lama-practice
 
-# 使用 Docker Compose 启动
-docker-compose up --build
+# 创建虚拟环境并安装依赖 (依赖安装到项目目录 venv/ 下)
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements-service.txt
 
-# 服务将在 http://localhost:5000 启动
+# 启动 GPU 服务
+./launch_gpu_service_mac.sh
+# Service: http://localhost:5002
 ```
 
-### 服务器部署
-
-#### 1. 首次部署到服务器
+### Docker (CPU)
 
 ```bash
-# SSH 连接到服务器
-ssh user@your-server.com
-
-# 克隆项目（包含子模块）
 git clone --recurse-submodules https://github.com/cpluser09/lama-practice.git
 cd lama-practice
-
-# 启动服务（后台运行）
 docker-compose up -d --build
-
-# 查看日志
-docker-compose logs -f
+# Service: http://localhost:5001
 ```
 
-#### 2. 更新服务器代码
+> **详细部署指南**: [DEPLOYMENT.md](DEPLOYMENT.md)
 
-**快速更新（仅修改网页/服务代码）：**
+## 部署选项 / Deployment Options
+
+| 选项 | 硬件 | 加速 | 端口 | 性能 (512x384) |
+|------|------|------|------|-----------------|
+| macOS MPS | Apple Silicon (M1/M2/M3/M4) | Metal GPU | 5002 | ~2s (3.5x) |
+| Docker CPU | 任意 / Any | CPU only | 5001 | ~7s |
+
+**选择建议**:
+- **Apple Silicon Mac** → 使用 MPS GPU 获得 3-4x 加速
+- **Intel Mac / 其他** → 使用 Docker CPU
+
+## API 使用 / API Usage
+
+### 健康检查 / Health Check
 
 ```bash
-# 拉取最新代码
-git pull
+# MPS GPU
+curl http://localhost:5002/health
 
-# 重启容器加载新代码（无需重新构建，只需几秒）
-docker-compose restart lama-service
-
-# 或者使用一键脚本
-./reload.sh
+# Docker CPU
+curl http://localhost:5001/health
 ```
 
-**完整更新（依赖/模型变化时）：**
+### 图像修复 / Inpaint Image
 
 ```bash
-# 拉取最新代码（包括子模块更新）
-git pull
-git submodule update --remote --merge
+# 不带掩码 (自动生成中心方块掩码)
+curl -X POST http://localhost:5002/inpaint \
+  -F "image=@input.jpg" \
+  -o output.png
 
-# 重新构建并启动服务（首次部署或依赖变化时使用）
-docker-compose up -d --build
+# 带掩码 (白色像素表示需要修复的区域)
+curl -X POST http://localhost:5002/inpaint \
+  -F "image=@input.jpg" \
+  -F "mask=@mask.png" \
+  -o output.png
 ```
 
-**开发模式（代码热加载）：**
+### 响应头 / Response Headers
 
-```bash
-# 启动开发模式，代码通过 volume 挂载，修改后自动生效
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-
-# 修改代码后只需重启容器即可（无需重建）
-docker-compose restart lama-service
+```
+X-Processing-Time: 2.15      # 总耗时 (秒) / Total time (seconds)
+X-Inference-Time: 1.93       # 推理耗时 (秒) / Inference time (seconds)
+X-Input-Resolution: 512x384   # 输入分辨率 / Input resolution
+X-Output-Resolution: 512x384  # 输出分辨率 / Output resolution
 ```
 
-#### 一键更新脚本（可选）
+## Web 界面功能 / Web Interface Features
 
-创建 `update.sh` 脚本实现一键更新：
+### 图像对比查看器 / Image Comparison Viewer
+- **滑动对比**: 拖动滑块或点击图像任意位置查看修复前后对比
+- **一键切换**: 快速切换查看原图、结果或滑动对比模式
+- **响应式设计**: 支持桌面和移动端访问
 
-```bash
-#!/bin/bash
-# update.sh - 服务器更新脚本
+### 绘图编辑器 / Drawing Editor
+- **矩形工具**: 拖拽绘制矩形修复区域
+- **画笔工具**: 手动涂抹需要修复的区域
+- **实时预览**: 绘制时实时显示修复区域
+- **预设测试**: 内置 6 种测试场景
 
-cd /path/to/lama-practice
-git pull
-git submodule update --remote --merge
-docker-compose down
-docker-compose up -d --build
-echo "Service updated successfully!"
-```
+### 测试场景 / Test Scenarios
+1. 文字去除 - 移除图片上的文字水印
+2. 物体移除 - 删除不需要的物体
+3. 划痕修复 - 修复照片划痕和斑点
+4. 人脸修复 - 修复人脸缺失部分
+5. 水印移除 - 去除预览水印
+6. 旧照片修复 - 修复破损的老照片
 
-使用方式：
-```bash
-chmod +x update.sh
-./update.sh
-```
-
-## 部署方式
-
-### 使用 Docker Compose (推荐)
-
-```bash
-# 构建并启动服务
-docker-compose up --build
-
-# 后台运行
-docker-compose up -d --build
-
-# 停止服务
-docker-compose down
-```
-
-### 使用 Docker
-
-```bash
-# 构建镜像
-docker build -t lama-inpainting .
-
-# 运行容器
-docker run -p 5000:5000 lama-inpainting
-```
-
-## API 使用
-
-### 健康检查
-
-```bash
-curl http://localhost:5000/health
-```
-
-### 图像修复
-
-#### 使用 curl
-
-```bash
-# 不带掩码 (使用默认中心方块掩码)
-curl -X POST http://localhost:5000/inpaint \
-     -F "image=@input.jpg" \
-     -o output.png
-
-# 带掩码 (掩码中白色像素表示需要修复的区域)
-curl -X POST http://localhost:5000/inpaint \
-     -F "image=@input.jpg" \
-     -F "mask=@mask.png" \
-     -o output.png
-```
-
-#### 使用 Python
-
-```python
-import requests
-
-# 不带掩码
-with open('input.jpg', 'rb') as f:
-    response = requests.post(
-        'http://localhost:5000/inpaint',
-        files={'image': f}
-    )
-
-with open('output.png', 'wb') as f:
-    f.write(response.content)
-
-# 带掩码
-with open('input.jpg', 'rb') as img_f, open('mask.png', 'rb') as mask_f:
-    response = requests.post(
-        'http://localhost:5000/inpaint',
-        files={'image': img_f, 'mask': mask_f}
-    )
-
-with open('output.png', 'wb') as f:
-    f.write(response.content)
-```
-
-## Web 界面功能
-
-### 图像对比查看器
-- **滑动对比**：拖动滑块或点击图像任意位置查看修复前后对比
-- **一键切换**：通过按钮快速切换查看原图、结果或滑动对比模式
-- **响应式设计**：支持桌面和移动端访问
-
-### 测试图片
-内置 6 种测试场景，覆盖常见修复需求：
-- 文字去除 - 移除图片上的文字水印
-- 物体移除 - 删除不需要的物体
-- 划痕修复 - 修复照片划痕和斑点
-- 人脸修复 - 修复人脸缺失部分
-- 水印移除 - 去除预览水印
-- 旧照片修复 - 修复破损的老照片
-
-## 测试
-
-运行测试脚本：
-
-```bash
-python test_client.py
-```
-
-## 项目结构
+## 项目结构 / Project Structure
 
 ```
 .
 ├── lama/                    # LaMa 原始项目 (git submodule)
-├── lama_service.py          # Flask Web 服务
+├── launch_gpu_service_mac.sh              # MPS GPU 服务 (Apple Silicon)
+├── launch-cpu-service_docker.py              # Docker CPU 服务
 ├── templates/               # Web 界面模板
-│   └── index.html          # 主页面（含对比查看器）
-├── generate_test_images.py  # 测试图片生成脚本
+│   └── index.html          # 主页面
+├── static/test/             # 测试图片
 ├── Dockerfile               # Docker 镜像配置
 ├── docker-compose.yml       # Docker Compose 配置
+├── docker-compose.dev.yml   # 开发模式 (热加载)
 ├── requirements-service.txt # Python 依赖
-├── test_client.py           # 测试客户端
+├── reload-docker.sh         # Docker 快速重载
+├── DEPLOYMENT.md            # 部署指南
 └── README.md                # 本文档
 ```
 
-## 常见问题
+## 更新代码 / Update Code
 
-### 为什么 `docker-compose up -d --build` 花费很长时间？
-
-完整重建会重新下载所有依赖和模型（约 200MB），需要几分钟。如果只是修改了网页或服务代码，使用快速更新：
+### 快速更新 (仅代码变更 / Code Only)
 
 ```bash
-# 快速更新（几秒钟）
-docker-compose restart lama-service
+git pull
+./reload-docker.sh
 ```
 
-### 如何区分什么时候需要完整重建？
+### 完整重建 (依赖/模型变化 / Dependencies Changed)
 
-| 变更内容 | 更新方式 |
-|---------|---------|
-| 网页 HTML/CSS | `docker-compose restart` |
-| 服务代码 lama_service.py | `docker-compose restart` |
-| 添加新的 Python 依赖 | `docker-compose up -d --build` |
-| 修改 Dockerfile | `docker-compose up -d --build` |
-| 模型更新 | `docker-compose up -d --build --no-cache` |
+```bash
+git pull
+git submodule update --remote --merge
+docker-compose down
+docker-compose up -d --build
+```
 
-## 注意事项
+## 模型文件 / Model Files
 
-- 服务运行在 CPU 模式下，适合 macOS
-- 首次启动需要下载预训练模型 (约 200MB)
-- 建议图像分辨率不超过 2000x2000
+### 预训练模型下载
 
-## 参考
+模型大小：~363MB (big-lama.zip)
+
+**Docker CPU 模式** - 自动下载：
+- 首次构建 Docker 镜像时自动从 HuggingFace 下载
+- 模型路径：`/app/big-lama/` (容器内)
+- 缓存在 Docker 层中，重建时无需重新下载
+
+**MPS GPU 模式** - 手动下载：
+```bash
+# 首次运行前需要下载模型
+cd /path/to/lama-practice
+curl -L -o big-lama.zip "https://huggingface.co/smartywu/big-lama/resolve/main/big-lama.zip"
+unzip big-lama.zip
+# 模型保存到 ./big-lama/ 目录
+```
+
+### 模型路径配置
+
+| 模式 | 代码中的路径 | 实际位置 |
+|------|------------|----------|
+| MPS GPU | `./big-lama/` | 项目根目录的 `big-lama/` |
+| Docker CPU | `/app/big-lama/` | 容器内的 `/app/big-lama/` |
+
+## 常见问题 / FAQ
+
+### 首次运行 MPS GPU 服务出错？
+
+确保已下载模型文件：
+```bash
+ls -la big-lama/models/best.ckpt
+# 应该存在此文件
+```
+
+### macOS 端口 5000 被占用？
+
+macOS 的 AirPlay Receiver 占用端口 5000。
+- **MPS GPU 服务** 使用端口 5002
+- **Docker 服务** 使用端口 5001
+
+### 为什么 docker-compose 重建很慢？
+
+完整重建会重新下载所有依赖和模型 (~200MB)。如果只修改了代码，使用快速更新：
+```bash
+./reload-docker.sh  # 只需几秒
+```
+
+### MPS GPU 不工作？
+
+检查 MPS 支持：
+```bash
+python3 -c "import torch; print(torch.backends.mps.is_available())"
+# 应该返回: True
+```
+
+### GPU vs CPU 性能对比
+
+| 分辨率 | CPU | MPS (GPU) | 加速比 |
+|--------|-----|-----------|--------|
+| 512x384 | ~7s | ~2s | 3.5x |
+| 1024x768 | ~15s | ~4s | 3.8x |
+| 1500x2000 | ~111s | ~25s | 4.4x |
+
+## 参考 / References
 
 - [LaMa GitHub](https://github.com/advimman/lama)
-- [LaMa 论文](https://arxiv.org/abs/2109.07161)
+- [LaMa 论文 / Paper](https://arxiv.org/abs/2109.07161)
+- [详细部署指南 / Deployment Guide](DEPLOYMENT.md)

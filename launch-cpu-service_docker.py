@@ -69,8 +69,16 @@ def load_model():
     if model is not None:
         return model
 
-    device = torch.device("cpu")
-    logger.info(f"Using device: {device}")
+    # Auto-detect best available device
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        logger.info(f"Using CUDA device: {torch.cuda.get_device_name(0)}")
+    elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+        device = torch.device("mps")
+        logger.info(f"Using MPS (Metal Performance Shaders) device for macOS GPU")
+    else:
+        device = torch.device("cpu")
+        logger.info("Using CPU device (no GPU detected)")
 
     train_config_path = os.path.join(MODEL_PATH, 'config.yaml')
     with open(train_config_path, 'r') as f:
@@ -82,12 +90,13 @@ def load_model():
     checkpoint_path = os.path.join(MODEL_PATH, 'models', 'best.ckpt')
     logger.info(f"Loading checkpoint from {checkpoint_path}")
 
+    # Load model to CPU first, then move to target device
     model = load_checkpoint(train_config, checkpoint_path, strict=False, map_location='cpu')
     model.freeze()
     model.to(device)
     model.eval()
 
-    logger.info("Model loaded successfully")
+    logger.info(f"Model loaded successfully on {device}")
     return model
 
 
@@ -178,10 +187,17 @@ def inpaint_image(image_np, mask_np):
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
+    global device
+    device_name = str(device)
+    if device.type == 'cuda':
+        device_name = f"CUDA ({torch.cuda.get_device_name(0)})"
+    elif device.type == 'mps':
+        device_name = "MPS (Metal Performance Shaders, macOS GPU)"
+
     return jsonify({
         'status': 'healthy',
         'service': 'LaMa Inpainting',
-        'device': 'cuda' if torch.cuda.is_available() else 'cpu'
+        'device': device_name
     })
 
 

@@ -54,3 +54,6 @@ static/
 
 # Claude
 .claude/
+
+# Big Lama models
+big-lama/

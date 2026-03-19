@@ -21,7 +21,8 @@ RUN pip install --no-cache-dir torch torchvision --index-url https://download.py
     pip install --no-cache-dir -r /tmp/requirements-service.txt && \
     pip install --no-cache-dir flask flask-cors pillow
 
-# Download pre-trained model (rarely changes, cache it)
+# Download pre-trained model (~363MB, cached in Docker layer)
+# Extracts to /app/big-lama/ with config.yaml and models/best.ckpt
 RUN --mount=type=cache,target=/tmp/cache \
     wget -O /tmp/big-lama.zip https://huggingface.co/smartywu/big-lama/resolve/main/big-lama.zip && \
     unzip /tmp/big-lama.zip -d /app/ && \
@@ -35,7 +36,7 @@ RUN python generate_test_images.py
 RUN mkdir -p /app/uploads /app/outputs
 
 # Copy application code (frequently changes - mounted as volume in dev)
-COPY lama_service.py /app/
+COPY launch-cpu-service_docker.py /app/
 COPY templates /app/templates
 
 ENV PYTHONPATH=/app
@@ -43,4 +44,4 @@ ENV TORCH_HOME=/app
 
 EXPOSE 5000
 
-CMD ["python", "lama_service.py"]
+CMD ["python", "launch-cpu-service_docker.py"]

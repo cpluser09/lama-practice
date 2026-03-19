@@ -4,10 +4,10 @@
 services:
   lama-service:
     volumes:
-      - ./lama_service.py:/app/lama_service.py          # 热加载服务代码
+      - ./launch-cpu-service_docker.py:/app/launch-cpu-service_docker.py          # 热加载服务代码
       - ./templates:/app/templates                      # 热加载模板
       - ./static:/app/static                            # 热加载静态文件
     environment:
       - FLASK_DEBUG=1                                   # 启用调试模式
-      - FLASK_APP=lama_service.py
-    command: ["python", "-u", "lama_service.py"]        # 无缓冲输出
+      - FLASK_APP=launch-cpu-service_docker.py
+    command: ["python", "-u", "launch-cpu-service_docker.py"]        # 无缓冲输出

@@ -69,8 +69,19 @@ def load_model(model_path, device):
     return model
 
 
+def resize_to_multiple_of_8(image_np):
+    """Resize image to dimensions that are multiples of 8 for LaMa model"""
+    h, w = image_np.shape[:2]
+    new_h = h - (h % 8)
+    new_w = w - (w % 8)
+
+    if new_h != h or new_w != w:
+        return cv2.resize(image_np, (new_w, new_h), interpolation=cv2.INTER_AREA), (h, w)
+    return image_np, (h, w)
+
+
 def inpaint(model, image_path, mask_path, output_path, device):
-    """Run inpainting"""
+    """Run inpainting, returns (total_time, inference_time)"""
     # Read images
     image_np = cv2.imread(str(image_path))
     mask_np = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
@@ -78,9 +89,16 @@ def inpaint(model, image_path, mask_path, output_path, device):
     if image_np is None or mask_np is None:
         raise ValueError("Failed to load images")
 
+    # Store original size
+    orig_h, orig_w = image_np.shape[:2]
+
     # Resize mask to match image
     if mask_np.shape[:2] != image_np.shape[:2]:
         mask_np = cv2.resize(mask_np, (image_np.shape[1], image_np.shape[0]))
+
+    # Resize to multiples of 8 for LaMa model
+    image_np, original_shape = resize_to_multiple_of_8(image_np)
+    mask_np, _ = resize_to_multiple_of_8(mask_np)
 
     # Convert to RGB tensor
     image_rgb = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
@@ -94,18 +112,31 @@ def inpaint(model, image_path, mask_path, output_path, device):
 
     batch = {'image': image_tensor, 'mask': mask_tensor}
 
-    # Run inference
+    # Run inference with timing
     with torch.no_grad():
         batch = move_to_device(batch, device)
         batch['mask'] = (batch['mask'] > 0) * 1
+
+        # Measure pure inference time
+        inference_start = time.time()
         batch = model(batch)
+        inference_time = time.time() - inference_start
+
         result = batch['inpainted'][0].permute(1, 2, 0).detach().cpu().numpy()
 
     result = np.clip(result * 255, 0, 255).astype('uint8')
+
+    # Resize back to original dimensions if needed
+    if result.shape[:2] != (orig_h, orig_w):
+        result = cv2.resize(result, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
+
     result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
 
     cv2.imwrite(str(output_path), result_bgr)
     print(f"Saved result to {output_path}")
+    print(f"Pure inference time: {inference_time:.2f} seconds")
+
+    return inference_time
 
 
 def main():
@@ -129,9 +160,10 @@ def main():
 
     print(f"Processing: {args.image}")
     start_time = time.time()
-    inpaint(model, args.image, args.mask, args.output, device)
+    inference_time = inpaint(model, args.image, args.mask, args.output, device)
     end_time = time.time()
-    print(f"Inpainting completed in {end_time - start_time:.2f} seconds")
+    total_time = end_time - start_time
+    print(f"Inpainting completed in {total_time:.2f} seconds (inference: {inference_time:.2f}s, overhead: {total_time - inference_time:.2f}s)")
     print("Done!")
 
 

@@ -605,6 +605,16 @@
     <!-- Toolbar -->
     <div class="toolbar">
         <div class="toolbar-group">
+            <span class="toolbar-label">Engine:</span>
+            <div class="segmented-control" id="engineControl">
+                <button id="enginePytorch" class="active" onclick="setEngine('pytorch')">PyTorch</button>
+                <button id="engineCoreml" onclick="setEngine('coreml')">CoreML</button>
+            </div>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <div class="toolbar-group">
             <span class="toolbar-label">Mode:</span>
             <div class="segmented-control">
                 <button id="brushMode" class="active" onclick="setMode('brush')">Brush</button>
@@ -686,6 +696,10 @@
             <div class="panel-section">
                 <div class="panel-title">Performance</div>
                 <div class="info-item">
+                    <span class="info-label">Engine</span>
+                    <span class="info-value" id="infoEngine">PyTorch</span>
+                </div>
+                <div class="info-item">
                     <span class="info-label">Inference Time</span>
                     <span class="info-value" id="infoTime">-</span>
                 </div>
@@ -753,6 +767,8 @@
         let isMousePressed = false;
         let compareMode = false;
         let hintVisible = true;
+        let inpaintMode = 'pytorch';
+        let coremlAvailable = false;
 
         // Test images configuration
         const testImages = {
@@ -786,6 +802,34 @@
 
             // Setup keyboard events
             setupKeyboardEvents();
+
+            // Check CoreML availability
+            checkCoremlAvailability();
+        }
+
+        async function checkCoremlAvailability() {
+            try {
+                const resp = await fetch('/health');
+                const data = await resp.json();
+                coremlAvailable = data.coreml_available === true;
+                const btn = document.getElementById('engineCoreml');
+                if (!coremlAvailable) {
+                    btn.disabled = true;
+                    btn.title = 'CoreML CLI not found';
+                    btn.style.opacity = '0.4';
+                    btn.style.cursor = 'not-allowed';
+                }
+            } catch (e) {
+                // Service may not be running yet
+            }
+        }
+
+        function setEngine(mode) {
+            if (mode === 'coreml' && !coremlAvailable) return;
+            inpaintMode = mode;
+            document.getElementById('enginePytorch').classList.toggle('active', mode === 'pytorch');
+            document.getElementById('engineCoreml').classList.toggle('active', mode === 'coreml');
+            document.getElementById('infoEngine').textContent = mode === 'pytorch' ? 'PyTorch' : 'CoreML';
         }
 
         function loadTestImage(sizeKey) {
@@ -1167,6 +1211,7 @@
                 const formData = new FormData();
                 formData.append('image', imageBlob, 'image.jpg');
                 formData.append('mask', maskBlob, 'mask.png');
+                formData.append('mode', inpaintMode);
 
                 subtext.textContent = 'Sending request...';
 
@@ -1184,8 +1229,12 @@
                 const processingTime = response.headers.get('X-Processing-Time');
                 const inferenceTime = response.headers.get('X-Inference-Time');
                 const inputResolution = response.headers.get('X-Input-Resolution');
+                const usedMode = response.headers.get('X-Inpaint-Mode');
 
                 document.getElementById('infoTime').textContent = inferenceTime || processingTime || '-';
+                if (usedMode) {
+                    document.getElementById('infoEngine').textContent = usedMode === 'coreml' ? 'CoreML' : 'PyTorch';
+                }
 
                 if (inferenceTime && inputResolution) {
                     const [w, h] = inputResolution.split('x').map(Number);

@@ -7,7 +7,9 @@ A simple Flask API for image inpainting using LaMa model
 import io
 import logging
 import os
+import subprocess
 import sys
+import tempfile
 import traceback
 from pathlib import Path
 
@@ -47,6 +49,16 @@ MAX_IMAGE_SIZE = 4096  # Limit image size for performance
 DEFAULT_IMAGE_SIZE = 1024  # Default size for large images
 STATIC_FOLDER = SYS_PATH / 'static'
 TEST_FOLDER = STATIC_FOLDER / 'test'
+
+# CoreML configuration
+COREML_CLI_PATH = None
+COREML_MODEL_PATH = None
+coreml_config_path = SYS_PATH / 'coreml' / 'config.yml'
+if coreml_config_path.exists():
+    with open(coreml_config_path, 'r') as f:
+        _coreml_cfg = yaml.safe_load(f)
+    COREML_CLI_PATH = _coreml_cfg.get('url')
+    COREML_MODEL_PATH = _coreml_cfg.get('model')
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
@@ -184,6 +196,51 @@ def inpaint_image(image_np, mask_np):
     return result_bgr, inference_time
 
 
+def inpaint_coreml(image_np, mask_np):
+    """Run inpainting via CoreML CLI tool.
+
+    Returns: (result_bgr, inference_time)
+    """
+    import time
+
+    if not COREML_CLI_PATH or not os.path.isfile(COREML_CLI_PATH):
+        raise RuntimeError(f'CoreML CLI not found at {COREML_CLI_PATH}')
+    if not COREML_MODEL_PATH or not os.path.isdir(COREML_MODEL_PATH):
+        raise RuntimeError(f'CoreML model not found at {COREML_MODEL_PATH}')
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        input_path = os.path.join(tmp_dir, 'input.png')
+        mask_path = os.path.join(tmp_dir, 'mask.png')
+        output_path = os.path.join(tmp_dir, 'output.png')
+
+        cv2.imwrite(input_path, image_np)
+        cv2.imwrite(mask_path, mask_np)
+
+        cmd = [
+            COREML_CLI_PATH,
+            input_path,
+            mask_path,
+            '--output', output_path,
+            '--model', COREML_MODEL_PATH,
+        ]
+
+        logger.info(f'CoreML command: {" ".join(cmd)}')
+
+        start_time = time.time()
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        inference_time = time.time() - start_time
+
+        if proc.returncode != 0:
+            logger.error(f'CoreML stderr: {proc.stderr}')
+            raise RuntimeError(f'CoreML CLI failed (exit {proc.returncode}): {proc.stderr}')
+
+        result_np = cv2.imread(output_path, cv2.IMREAD_COLOR)
+        if result_np is None:
+            raise RuntimeError('CoreML CLI produced no output image')
+
+    return result_np, inference_time
+
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
@@ -194,10 +251,16 @@ def health():
     elif device.type == 'mps':
         device_name = "MPS (Metal Performance Shaders, macOS GPU)"
 
+    coreml_available = bool(
+        COREML_CLI_PATH and os.path.isfile(COREML_CLI_PATH)
+        and COREML_MODEL_PATH and os.path.isdir(COREML_MODEL_PATH)
+    )
+
     return jsonify({
         'status': 'healthy',
         'service': 'LaMa Inpainting',
-        'device': device_name
+        'device': device_name,
+        'coreml_available': coreml_available,
     })
 
 
@@ -243,23 +306,34 @@ def inpaint():
             # Generate default mask
             mask_np = generate_default_mask((image_np.shape[1], image_np.shape[0]))
 
+        # Determine inpaint mode
+        mode = request.form.get('mode', 'pytorch')
+        if mode not in ('pytorch', 'coreml'):
+            return jsonify({'error': f'Invalid mode: {mode}'}), 400
+
         # Run inpainting
-        logger.info(f"Processing image of size {image_np.shape}")
+        logger.info(f"Processing image of size {image_np.shape} with mode={mode}")
         import time
         start_time = time.time()
-        result_np, inference_time = inpaint_image(image_np, mask_np)
+
+        if mode == 'coreml':
+            result_np, inference_time = inpaint_coreml(image_np, mask_np)
+        else:
+            result_np, inference_time = inpaint_image(image_np, mask_np)
+
         total_time = time.time() - start_time
 
         # Encode result
         _, buffer = cv2.imencode('.png', result_np)
         result_bytes = io.BytesIO(buffer.tobytes())
 
-        logger.info(f"Inpainting completed - Total: {total_time:.2f}s, Inference: {inference_time:.2f}s")
+        logger.info(f"Inpainting completed ({mode}) - Total: {total_time:.2f}s, Inference: {inference_time:.2f}s")
         response = send_file(result_bytes, mimetype='image/png')
         response.headers['X-Processing-Time'] = f'{total_time:.2f}'
         response.headers['X-Inference-Time'] = f'{inference_time:.2f}'
         response.headers['X-Input-Resolution'] = f'{image_np.shape[1]}x{image_np.shape[0]}'
         response.headers['X-Output-Resolution'] = f'{result_np.shape[1]}x{result_np.shape[0]}'
+        response.headers['X-Inpaint-Mode'] = mode
         return response
 
     except Exception as e:

@@ -1474,29 +1474,47 @@
             }
 
             const timestamp = Date.now();
+            const engineType = inpaintMode;  // 'pytorch' or 'coreml'
+            const dimensions = `${originalWidth}x${originalHeight}`;
+
+            // Download original image first
+            if (originalImage) {
+                const originCanvas = document.createElement('canvas');
+                originCanvas.width = originalWidth;
+                originCanvas.height = originalHeight;
+                const originCtx = originCanvas.getContext('2d');
+                originCtx.drawImage(originalImage, 0, 0, originalWidth, originalHeight);
+
+                const originLink = document.createElement('a');
+                originLink.download = `lama_${engineType}_${dimensions}_${timestamp}_origin.jpg`;
+                originLink.href = originCanvas.toDataURL('image/jpeg', 0.95);
+                originLink.click();
+            }
 
             // Download inpainted image
-            const downloadCanvas = document.createElement('canvas');
-            downloadCanvas.width = originalWidth;
-            downloadCanvas.height = originalHeight;
-            const downloadCtx = downloadCanvas.getContext('2d');
+            setTimeout(() => {
+                const downloadCanvas = document.createElement('canvas');
+                downloadCanvas.width = originalWidth;
+                downloadCanvas.height = originalHeight;
+                const downloadCtx = downloadCanvas.getContext('2d');
 
-            // Draw inpainted image (scaled if needed)
-            downloadCtx.drawImage(inpaintedImage, 0, 0, originalWidth, originalHeight);
+                // Draw inpainted image (scaled if needed)
+                downloadCtx.drawImage(inpaintedImage, 0, 0, originalWidth, originalHeight);
 
-            const link = document.createElement('a');
-            link.download = `lama_inpaint_${timestamp}.jpg`;
-            link.href = downloadCanvas.toDataURL('image/jpeg', 0.95);
-            link.click();
+                const link = document.createElement('a');
+                link.download = `lama_${engineType}_${dimensions}_${timestamp}_inpaint.jpg`;
+                link.href = downloadCanvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+            }, 100);
 
             // Download mask if it exists
             if (maskCanvas && hasMaskContent()) {
                 setTimeout(() => {
                     const maskLink = document.createElement('a');
-                    maskLink.download = `lama_mask_${timestamp}.png`;
+                    maskLink.download = `lama_${engineType}_${dimensions}_${timestamp}_mask.png`;
                     maskLink.href = maskCanvas.toDataURL('image/png');
                     maskLink.click();
-                }, 100);
+                }, 200);
             }
         }
 

@@ -745,9 +745,6 @@
     <div class="compare-modal" id="compareModal">
         <div class="compare-content">
             <button class="close-btn" onclick="closeCompareModal()">×</button>
-            <div class="compare-hint">
-                ← → to toggle • ESC to close • Space to hide hints
-            </div>
             <img id="compareImage" class="compare-image" alt="Compare">
             <div class="compare-controls">
                 <span class="toolbar-label" id="compareLabel">Result</span>
@@ -776,7 +773,6 @@
         let rectPreviewCtx = null;
         let isMousePressed = false;
         let compareMode = false;
-        let hintVisible = true;
         let inpaintMode = 'pytorch';
         let coremlAvailable = false;
 
@@ -929,13 +925,6 @@
 
         function setupKeyboardEvents() {
             document.addEventListener('keydown', (e) => {
-                // Space bar to toggle hint visibility
-                if (e.code === 'Space' && !document.getElementById('compareModal').classList.contains('active')) {
-                    e.preventDefault();
-                    toggleHintVisibility();
-                    return;
-                }
-
                 // Compare modal navigation
                 if (document.getElementById('compareModal').classList.contains('active')) {
                     if (e.key === 'ArrowLeft') {
@@ -947,18 +936,6 @@
                     }
                 }
             });
-        }
-
-        function toggleHintVisibility() {
-            hintVisible = !hintVisible;
-            const hint = document.getElementById('liveCompareHint');
-            if (hint) {
-                if (hintVisible) {
-                    hint.classList.remove('hidden');
-                } else {
-                    hint.classList.add('hidden');
-                }
-            }
         }
 
         function setMode(mode) {

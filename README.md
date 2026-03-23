@@ -235,6 +235,68 @@ python3 -c "import torch; print(torch.backends.mps.is_available())"
 | 1024x768 | ~15s | ~4s | 3.8x |
 | 1500x2000 | ~111s | ~25s | 4.4x |
 
+## 架构图 / Architecture
+
+```mermaid
+flowchart TB
+    subgraph Client["客户端 / Client"]
+        Browser["🌐 Web Browser<br/>(index.html)"]
+        Canvas["🎨 Canvas<br/>绘图/上传"]
+    end
+
+    subgraph Server["Flask 服务 / Port 5002"]
+        API["📡 /inpaint API"]
+        Router{"路由选择<br/>mode=?"}
+    end
+
+    subgraph PyTorch["PyTorch 引擎"]
+        PT_Model["🧠 LaMa Model<br/>(best.ckpt)"]
+        PT_Device["设备检测<br/>MPS/CUDA/CPU"]
+        PT_Infer["推理<br/>~2s (512px)"]
+    end
+
+    subgraph CoreML["CoreML 引擎"]
+        CLI["🔧 lama_infer CLI"]
+        CML_Model["📦 CoreML.mlmodel"]
+        CML_Infer["推理<br/>~3s (512px)"]
+    end
+
+    Client -->|multipart/form-data| API
+    API --> Router
+
+    Router -->|mode=pytorch| PyTorch
+    Router -->|mode=coreml| CoreML
+
+    PyTorch --> PT_Device
+    PT_Device --> PT_Model
+    PT_Model --> PT_Infer
+    PT_Infer -->|result.png| API
+
+    CoreML --> CLI
+    CLI --> CML_Model
+    CML_Model --> CML_Infer
+    CML_Infer -->|result.png| API
+
+    API -->|PNG Image| Client
+
+    style PyTorch fill:#e1f5fe,stroke:#0288d1
+    style CoreML fill:#f3e5f5,stroke:#7b1fa2
+    style Router fill:#fff9c4,stroke:#f9a825
+    style API fill:#e8f5e9,stroke:#43a047
+```
+
+### 数据流程 / Data Flow
+
+**PyTorch 模式** (GPU 加速):
+```
+Image + Mask → Flask → Tensor → MPS/CUDA → LaMa Model → Result → PNG
+```
+
+**CoreML 模式** (ANE 加速):
+```
+Image + Mask → Flask → CLI subprocess → CoreML Model → Result → PNG
+```
+
 ## 参考 / References
 
 - [LaMa GitHub](https://github.com/advimman/lama)

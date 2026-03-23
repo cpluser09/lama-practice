@@ -1389,7 +1389,9 @@
                 return;
             }
 
-            // Create canvas with original dimensions
+            const timestamp = Date.now();
+
+            // Download inpainted image
             const downloadCanvas = document.createElement('canvas');
             downloadCanvas.width = originalWidth;
             downloadCanvas.height = originalHeight;
@@ -1398,11 +1400,33 @@
             // Draw inpainted image (scaled if needed)
             downloadCtx.drawImage(inpaintedImage, 0, 0, originalWidth, originalHeight);
 
-            // Download
             const link = document.createElement('a');
-            link.download = `lama_inpaint_${Date.now()}.jpg`;
+            link.download = `lama_inpaint_${timestamp}.jpg`;
             link.href = downloadCanvas.toDataURL('image/jpeg', 0.95);
             link.click();
+
+            // Download mask if it exists
+            if (maskCanvas && hasMaskContent()) {
+                setTimeout(() => {
+                    const maskLink = document.createElement('a');
+                    maskLink.download = `lama_mask_${timestamp}.png`;
+                    maskLink.href = maskCanvas.toDataURL('image/png');
+                    maskLink.click();
+                }, 100);
+            }
+        }
+
+        // Check if mask has any content
+        function hasMaskContent() {
+            if (!maskCanvas || !maskCtx) return false;
+            const imageData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] > 0 || data[i + 1] > 0 || data[i + 2] > 0 || data[i + 3] > 0) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Handle test image select (trigger upload when upload option selected)

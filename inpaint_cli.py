@@ -39,6 +39,7 @@ def _patched_torch_load(*args, **kwargs):
     return _original_torch_load(*args, **kwargs)
 torch.load = _patched_torch_load
 
+from saicinpainting.evaluation.data import load_image, pad_img_to_modulo, ceil_modulo
 from saicinpainting.evaluation.utils import move_to_device
 from saicinpainting.training.trainers import load_checkpoint
 
@@ -82,33 +83,35 @@ def resize_to_multiple_of_8(image_np):
 
 def inpaint(model, image_path, mask_path, output_path, device):
     """Run inpainting, returns (total_time, inference_time)"""
-    # Read images
-    image_np = cv2.imread(str(image_path))
-    mask_np = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
+    # Load images using saicinpainting.evaluation.data.load_image
+    # This uses PIL/Pillow internally (data.py:13)
+    image = load_image(str(image_path), mode='RGB')  # Returns (3, H, W), float32, 0-1 range
+    mask = load_image(str(mask_path), mode='L')      # Returns (H, W), float32, 0-1 range
 
-    if image_np is None or mask_np is None:
-        raise ValueError("Failed to load images")
+    # Store original dimensions
+    _, orig_h, orig_w = image.shape
 
-    # Store original size
-    orig_h, orig_w = image_np.shape[:2]
+    # Ensure mask matches image size
+    if mask.shape != image.shape[1:]:
+        # Resize mask using PIL
+        from PIL import Image
+        mask_img = Image.fromarray((mask * 255).astype('uint8'))
+        mask_img = mask_img.resize((orig_w, orig_h), Image.NEAREST)
+        mask = np.array(mask_img).astype('float32') / 255
 
-    # Resize mask to match image
-    if mask_np.shape[:2] != image_np.shape[:2]:
-        mask_np = cv2.resize(mask_np, (image_np.shape[1], image_np.shape[0]))
+    # Pad images to multiples of 8 for LaMa model
+    image_padded = pad_img_to_modulo(image, 8)
+    mask_padded = pad_img_to_modulo(mask[None, ...], 8)  # Add channel dim for padding
 
-    # Resize to multiples of 8 for LaMa model
-    image_np, original_shape = resize_to_multiple_of_8(image_np)
-    mask_np, _ = resize_to_multiple_of_8(mask_np)
+    # Get padded dimensions
+    _, padded_h, padded_w = image_padded.shape
 
-    # Convert to RGB tensor
-    image_rgb = cv2.cvtColor(image_np, cv2.COLOR_BGR2RGB)
-    image_tensor = torch.from_numpy(image_rgb).permute(2, 0, 1).float() / 255.0
-    image_tensor = image_tensor.unsqueeze(0)
+    if (padded_h, padded_w) != (orig_h, orig_w):
+        print(f"Padding image from ({orig_h}, {orig_w}) to ({padded_h}, {padded_w}) for model compatibility")
 
-    mask_tensor = torch.from_numpy(mask_np).float() / 255.0
-    if len(mask_tensor.shape) == 2:
-        mask_tensor = mask_tensor.unsqueeze(0)
-    mask_tensor = mask_tensor.unsqueeze(0)
+    # Convert to tensors
+    image_tensor = torch.from_numpy(image_padded).unsqueeze(0)  # (1, 3, H, W)
+    mask_tensor = torch.from_numpy(mask_padded).unsqueeze(0)  # (1, 1, H, W)
 
     batch = {'image': image_tensor, 'mask': mask_tensor}
 
@@ -126,10 +129,11 @@ def inpaint(model, image_path, mask_path, output_path, device):
 
     result = np.clip(result * 255, 0, 255).astype('uint8')
 
-    # Resize back to original dimensions if needed
+    # Crop back to original dimensions if padded
     if result.shape[:2] != (orig_h, orig_w):
-        result = cv2.resize(result, (orig_w, orig_h), interpolation=cv2.INTER_LINEAR)
+        result = result[:orig_h, :orig_w, :]
 
+    # Convert RGB to BGR for saving with OpenCV
     result_bgr = cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
 
     cv2.imwrite(str(output_path), result_bgr)

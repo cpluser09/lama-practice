@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "LaMa Inpaint CLI",
+            "name": "LaMa: Text Removal Test",
             "type": "debugpy",
             "request": "launch",
             "module": "inpaint_cli",
@@ -13,6 +13,44 @@
                 "static/test/text_removal_mask.png",
                 "--output",
                 "outputs/output.jpg",
+                "--model",
+                "big-lama"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "LaMa: 512x512 Pattern Test",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "inpaint_cli",
+            "args": [
+                "--image",
+                "static/test-images/crop/test_pattern_512x512.jpg",
+                "--mask",
+                "static/test-images/crop/lama_inpaint_512x512_mask.png",
+                "--output",
+                "/tmp/pytorch_512x512.jpg",
+                "--model",
+                "big-lama"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false
+        },
+        {
+            "name": "LaMa: 4K Test (Samsung T3)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "inpaint_cli",
+            "args": [
+                "--image",
+                "/Volumes/Samsung_T3/PW/pattern/inpainting/4k/lama_4096x2730_origin.jpg",
+                "--mask",
+                "/Volumes/Samsung_T3/PW/pattern/inpainting/4k/lama_4096x2730_mask.png",
+                "--output",
+                "/Volumes/Samsung_T3/PW/pattern/inpainting/4k_output/inpaint_pytorch.jpg",
                 "--model",
                 "big-lama"
             ],

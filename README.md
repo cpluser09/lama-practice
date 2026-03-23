@@ -80,6 +80,36 @@ X-Input-Resolution: 512x384   # 输入分辨率 / Input resolution
 X-Output-Resolution: 512x384  # 输出分辨率 / Output resolution
 ```
 
+## 命令行接口 / CLI
+
+### PyTorch 模式 / PyTorch Mode
+
+直接使用 Python 命令行进行图像修复，支持 GPU 加速：
+
+```bash
+# 基本用法
+python inpaint_cli.py --image input.jpg --mask mask.png --output result.jpg
+
+# 简写形式
+python inpaint_cli.py -i photo.jpg -m mask.png -o result.jpg
+
+# 指定模型路径
+python inpaint_cli.py -i photo.jpg -m mask.png -o result.jpg --model /path/to/big-lama
+```
+
+**参数说明**:
+| 参数 | 简写 | 说明 | 必需 |
+|------|------|------|------|
+| `--image` | `-i` | 输入图片路径 | ✓ |
+| `--mask` | `-m` | 掩码图片路径 (白色=修复区域) | ✓ |
+| `--output` | `-o` | 输出图片路径 | ✓ |
+| `--model` | - | 模型目录 (默认: `big-lama`) | - |
+
+**设备自动检测**:
+- Apple Silicon (M1/M2/M3/M4) → MPS GPU
+- NVIDIA GPU → CUDA
+- 其他 → CPU
+
 ## Web 界面功能 / Web Interface Features
 
 ### 图像对比查看器 / Image Comparison Viewer
@@ -106,6 +136,7 @@ X-Output-Resolution: 512x384  # 输出分辨率 / Output resolution
 ```
 .
 ├── lama/                    # LaMa 原始项目 (git submodule)
+├── inpaint_cli.py           # PyTorch 命令行接口
 ├── launch_gpu_service_mac.sh              # MPS GPU 服务 (Apple Silicon)
 ├── launch-cpu-service_docker.py              # Docker CPU 服务
 ├── templates/               # Web 界面模板

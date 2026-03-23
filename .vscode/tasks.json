@@ -1,0 +1,61 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "LaMa: Inpaint 512x512",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/bin/python",
+            "args": [
+                "-m",
+                "inpaint_cli",
+                "--image",
+                "static/test-images/crop/lama_inpaint_512x512.jpg",
+                "--mask",
+                "static/test-images/crop/lama_inpaint_512x512_mask.png",
+                "--output",
+                "static/test-images/crop/lama_inpaint_512x512_output_pytorch.jpg",
+                "--model",
+                "big-lama"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "LaMa: Inpaint 2048x2048",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/bin/python",
+            "args": [
+                "-m",
+                "inpaint_cli",
+                "--image",
+                "static/test-images/crop/lama_inpaint_2048x2048.jpg",
+                "--mask",
+                "static/test-images/crop/lama_inpaint_2048x2048_mask.png",
+                "--output",
+                "static/test-images/crop/lama_inpaint_2048x2048_output_pytorch.jpg",
+                "--model",
+                "big-lama"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

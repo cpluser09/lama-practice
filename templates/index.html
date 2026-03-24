@@ -928,8 +928,10 @@
                 // Compare modal navigation
                 if (document.getElementById('compareModal').classList.contains('active')) {
                     if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
                         showOriginal();
                     } else if (e.key === 'ArrowRight') {
+                        e.preventDefault();
                         showResult();
                     } else if (e.key === 'Escape') {
                         closeCompareModal();

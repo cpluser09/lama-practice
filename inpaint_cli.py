@@ -30,7 +30,6 @@ import yaml
 from omegaconf import OmegaConf
 
 # Fix PyTorch 2.6+ weights_only issue - monkeypatch torch.load
-import torch
 import functools
 _original_torch_load = torch.load
 @functools.wraps(_original_torch_load)
@@ -42,6 +41,62 @@ torch.load = _patched_torch_load
 from saicinpainting.evaluation.data import load_image, pad_img_to_modulo, ceil_modulo
 from saicinpainting.evaluation.utils import move_to_device
 from saicinpainting.training.trainers import load_checkpoint
+
+
+def parse_mbt_file(path: Path) -> dict[str, str]:
+    """Parse an MBT file into a dictionary of key-value pairs."""
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or line.startswith(";") or line.startswith("//"):
+            continue
+        if "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip()
+    return values
+
+
+def expand_workspace(value: str, base_path: Path) -> str:
+    """Expand workspace folder variables in a path."""
+    # Try to resolve ${workspaceFolder} relative to mbt file location
+    if "${workspaceFolder}" in value:
+        # Try to find the workspace root by looking for .git or other markers
+        workspace_root = base_path.parent
+        for _ in range(5):  # Limit search depth
+            if (workspace_root / ".git").exists():
+                break
+            parent = workspace_root.parent
+            if parent == workspace_root:  # Reached filesystem root
+                break
+            workspace_root = parent
+        value = value.replace("${workspaceFolder}", str(workspace_root))
+    return value
+
+
+def resolve_user_path(raw_path: str, base_dir: Path) -> Path:
+    """Resolve a user path with proper base directory handling."""
+    candidate = Path(expand_workspace(raw_path, base_dir)).expanduser()
+    if not candidate.is_absolute():
+        candidate = (base_dir / candidate).resolve()
+    return candidate
+
+
+def load_mbt_config(path: Path) -> dict[str, Path]:
+    """Load configuration from an MBT file."""
+    raw = parse_mbt_file(path)
+    required = ["ImagePath", "MaskPath", "OutputPath"]
+    missing = [key for key in required if not raw.get(key)]
+    if missing:
+        raise ValueError(f"Missing required MBT keys in {path.name}: {', '.join(missing)}")
+
+    mbt_dir = path.parent
+    return {
+        "image": resolve_user_path(raw["ImagePath"], mbt_dir),
+        "mask": resolve_user_path(raw["MaskPath"], mbt_dir),
+        "output": resolve_user_path(raw["OutputPath"], mbt_dir),
+        "model": resolve_user_path(raw["ModelPath"], mbt_dir) if raw.get("ModelPath") else None,
+    }
 
 
 def get_optimal_device():
@@ -145,14 +200,45 @@ def inpaint(model, image_path, mask_path, output_path, device):
 
 def main():
     parser = argparse.ArgumentParser(description='LaMa Image Inpainting CLI')
-    parser.add_argument('--image', '-i', required=True, help='Input image path')
-    parser.add_argument('--mask', '-m', required=True, help='Mask image path (white = to inpaint)')
-    parser.add_argument('--output', '-o', required=True, help='Output image path')
-    parser.add_argument('--model', default='big-lama', help='Model directory')
+    parser.add_argument('--mbt', help='MBT file path (can provide all configuration)')
+    parser.add_argument('--image', '-i', help='Input image path')
+    parser.add_argument('--mask', '-m', help='Mask image path (white = to inpaint)')
+    parser.add_argument('--output', '-o', help='Output image path')
+    parser.add_argument('--model', help='Model directory')
 
     args = parser.parse_args()
 
-    model_path = Path(args.model)
+    # Load configuration from MBT file if provided
+    mbt_config = {}
+    if args.mbt:
+        mbt_path = Path(args.mbt)
+        if not mbt_path.exists():
+            print(f"Error: MBT file not found: {mbt_path}", file=sys.stderr)
+            sys.exit(1)
+        try:
+            mbt_config = load_mbt_config(mbt_path)
+            print(f"Loaded configuration from: {mbt_path}")
+        except Exception as e:
+            print(f"Error loading MBT file: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    # Determine final configuration (command line args override MBT)
+    image_path = args.image if args.image else (mbt_config.get("image") if mbt_config else None)
+    mask_path = args.mask if args.mask else (mbt_config.get("mask") if mbt_config else None)
+    output_path = args.output if args.output else (mbt_config.get("output") if mbt_config else None)
+    model_arg = args.model if args.model else (mbt_config.get("model") if mbt_config else None)
+
+    # Validate required arguments
+    if not image_path or not mask_path or not output_path:
+        parser.print_help()
+        print("\nError: --image, --mask, and --output are required (either via command line or MBT file)", file=sys.stderr)
+        sys.exit(1)
+
+    # Set up model path
+    if model_arg:
+        model_path = Path(model_arg)
+    else:
+        model_path = Path('big-lama')
     if not model_path.is_absolute():
         model_path = Path(__file__).parent / model_path
 
@@ -162,9 +248,9 @@ def main():
     print("Loading model...")
     model = load_model(model_path, device)
 
-    print(f"Processing: {args.image}")
+    print(f"Processing: {image_path}")
     start_time = time.time()
-    inference_time = inpaint(model, args.image, args.mask, args.output, device)
+    inference_time = inpaint(model, str(image_path), str(mask_path), str(output_path), device)
     end_time = time.time()
     total_time = end_time - start_time
     print(f"Inpainting completed in {total_time:.2f} seconds (inference: {inference_time:.2f}s, overhead: {total_time - inference_time:.2f}s)")

@@ -292,11 +292,11 @@ def generate_markdown_report(results, output_dir: Path, num_runs: int):
     report.append("")
 
     if num_runs == 1:
-        report.append("| # | Test Name | Total Time (s) | Inference (s) | Overhead (s) | Status |")
-        report.append("|---|-----------|----------------|---------------|--------------|--------|")
+        report.append("| # | Test Name | Total Time (ms) | Inference (ms) | Overhead (ms) | Status |")
+        report.append("|---|-----------|-----------------|----------------|---------------|--------|")
     else:
-        report.append("| # | Test Name | Total Time (s) | Inference (s) | Overhead (s) | Success |")
-        report.append("|---|-----------|----------------|---------------|--------------|---------|")
+        report.append("| # | Test Name | Total Time (ms) | Inference (ms) | Overhead (ms) | Success |")
+        report.append("|---|-----------|-----------------|----------------|---------------|---------|")
 
     successful_results = [r for r in results if r.get('success') and r.get('inference_time') is not None]
 
@@ -305,14 +305,14 @@ def generate_markdown_report(results, output_dir: Path, num_runs: int):
 
         if r.get('inference_time') is not None:
             if num_runs == 1:
-                total_time = f"{r['total_time']:.2f}"
-                inf_time = f"{r['inference_time']:.2f}"
-                overhead = f"{r['overhead']:.2f}"
+                total_time = f"{r['total_time']*1000:.2f}"
+                inf_time = f"{r['inference_time']*1000:.2f}"
+                overhead = f"{r['overhead']*1000:.2f}"
                 report.append(f"| {idx} | {r['name']} | {total_time} | {inf_time} | {overhead} | {status} |")
             else:
-                total_time = f"{r['total_time']:.2f} ±{r['total_time_std']:.2f}"
-                inf_time = f"{r['inference_time']:.2f} ±{r['inference_time_std']:.2f}"
-                overhead = f"{r['overhead']:.2f} ±{r['overhead_std']:.2f}"
+                total_time = f"{r['total_time']*1000:.2f} ±{r['total_time_std']*1000:.2f}"
+                inf_time = f"{r['inference_time']*1000:.2f} ±{r['inference_time_std']*1000:.2f}"
+                overhead = f"{r['overhead']*1000:.2f} ±{r['overhead_std']*1000:.2f}"
                 success_info = f"{r['successful_runs']}/{r['runs']}"
                 report.append(f"| {idx} | {r['name']} | {total_time} | {inf_time} | {overhead} | {success_info} |")
         else:
@@ -334,34 +334,34 @@ def generate_markdown_report(results, output_dir: Path, num_runs: int):
         report.append("")
         report.append(f"**Successful tests:** {len(successful_results)}/{len(results)}")
         report.append("")
-        report.append("### Total Time")
-        report.append(f"- **Min:** {min(total_times):.2f}s")
-        report.append(f"- **Max:** {max(total_times):.2f}s")
-        report.append(f"- **Avg:** {sum(total_times)/len(total_times):.2f}s")
+        report.append("### Total Time (ms)")
+        report.append(f"- **Min:** {min(total_times)*1000:.2f}ms")
+        report.append(f"- **Max:** {max(total_times)*1000:.2f}ms")
+        report.append(f"- **Avg:** {sum(total_times)/len(total_times)*1000:.2f}ms")
         report.append("")
-        report.append("### Pure Inference Time")
-        report.append(f"- **Min:** {min(inf_times):.2f}s")
-        report.append(f"- **Max:** {max(inf_times):.2f}s")
-        report.append(f"- **Avg:** {sum(inf_times)/len(inf_times):.2f}s")
+        report.append("### Pure Inference Time (ms)")
+        report.append(f"- **Min:** {min(inf_times)*1000:.2f}ms")
+        report.append(f"- **Max:** {max(inf_times)*1000:.2f}ms")
+        report.append(f"- **Avg:** {sum(inf_times)/len(inf_times)*1000:.2f}ms")
         report.append("")
-        report.append("### Overhead (pre/post processing)")
-        report.append(f"- **Min:** {min(overheads):.2f}s")
-        report.append(f"- **Max:** {max(overheads):.2f}s")
-        report.append(f"- **Avg:** {sum(overheads)/len(overheads):.2f}s")
+        report.append("### Overhead (pre/post processing, ms)")
+        report.append(f"- **Min:** {min(overheads)*1000:.2f}ms")
+        report.append(f"- **Max:** {max(overheads)*1000:.2f}ms")
+        report.append(f"- **Avg:** {sum(overheads)/len(overheads)*1000:.2f}ms")
         report.append(f"- **Avg % of Total:** {sum(overheads)/sum(total_times)*100:.1f}%")
         report.append("")
 
         # Per-test detailed stats when multiple runs
         if num_runs > 1:
-            report.append("## Per-Test Detailed Statistics")
+            report.append("## Per-Test Detailed Statistics (ms)")
             report.append("")
-            report.append("| Test Name | Metric | Mean (s) | Min (s) | Max (s) | Std Dev (s) |")
-            report.append("|-----------|--------|----------|---------|---------|-------------|")
+            report.append("| Test Name | Metric | Mean (ms) | Min (ms) | Max (ms) | Std Dev (ms) |")
+            report.append("|-----------|--------|----------:|--------:|--------:|-------------:|")
 
             for r in successful_results:
-                report.append(f"| {r['name']} | **Total** | {r['total_time']:.4f} | {r['total_time_min']:.4f} | {r['total_time_max']:.4f} | {r['total_time_std']:.4f} |")
-                report.append(f"| {r['name']} | **Inference** | {r['inference_time']:.4f} | {r['inference_time_min']:.4f} | {r['inference_time_max']:.4f} | {r['inference_time_std']:.4f} |")
-                report.append(f"| {r['name']} | **Overhead** | {r['overhead']:.4f} | {r['overhead_min']:.4f} | {r['overhead_max']:.4f} | {r['overhead_std']:.4f} |")
+                report.append(f"| {r['name']} | **Total** | {r['total_time']*1000:.2f} | {r['total_time_min']*1000:.2f} | {r['total_time_max']*1000:.2f} | {r['total_time_std']*1000:.2f} |")
+                report.append(f"| {r['name']} | **Inference** | {r['inference_time']*1000:.2f} | {r['inference_time_min']*1000:.2f} | {r['inference_time_max']*1000:.2f} | {r['inference_time_std']*1000:.2f} |")
+                report.append(f"| {r['name']} | **Overhead** | {r['overhead']*1000:.2f} | {r['overhead_min']*1000:.2f} | {r['overhead_max']*1000:.2f} | {r['overhead_std']*1000:.2f} |")
 
             report.append("")
 

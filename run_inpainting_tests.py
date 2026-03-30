@@ -371,8 +371,9 @@ def generate_markdown_report(results, output_dir: Path, num_runs: int):
     markdown_text = "\n".join(report)
     print(markdown_text)
 
-    # Save report
-    report_file = output_dir / "performance_report.md"
+    # Save report with timestamp
+    timestamp = __import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S')
+    report_file = output_dir / f"performance_report_{timestamp}.md"
     with open(report_file, 'w') as f:
         f.write(markdown_text)
 
